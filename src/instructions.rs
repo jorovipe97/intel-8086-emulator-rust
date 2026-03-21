@@ -1,10 +1,11 @@
-use std::fmt::{Display, Error, Formatter, Result, write};
+use std::fmt::{Display, Error, Formatter, Result};
 
 /// Represents all possible instructions supported by the simulator
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OperationType {
     None,
     Mov,
+    Add,
 }
 
 impl OperationType {
@@ -16,6 +17,7 @@ impl Display for OperationType {
         match self {
             Self::Mov => write!(f, "mov"),
             Self::None => write!(f, "none"),
+            Self::Add => write!(f, "add"),
         }
     }
 }
@@ -35,10 +37,10 @@ pub enum InstructionBitsUsage {
     Data,
     WMakesDataWide,
     /// Segment registers.
-    SR,
+    // SR,
 
-    /// Instruction Pointer Increment.
-    IpInc,
+    // /// Instruction Pointer Increment.
+    // IpInc,
 
     // Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     // TODO: Can we remove it?
@@ -209,10 +211,6 @@ pub struct InstructionBits {
     // Number of bits for this part, eg reg field have 3 bits
     pub bit_count: u8,
 
-    // Ammount we need to left shift the original byte (8 bits)
-    // so we extract the field, eg 00reg000. Needs a 3 bits shift
-    pub shift: u8, // TODO: Delete?
-
     // The actual bytes, depending on the usage this may need different things.
     // Eg if usage is a literal, then this is the opcode it should match.
     pub value: u8,
@@ -222,7 +220,6 @@ impl InstructionBits {
     const DEFAULT: Self = Self {
         usage: InstructionBitsUsage::End,
         bit_count: 0,
-        shift: 0,
         value: 0,
     };
 }
@@ -266,7 +263,6 @@ const W_MAKES_DATA_WIDE: InstructionBits = InstructionBits {
     usage: InstructionBitsUsage::WMakesDataWide,
     bit_count: 0,
     value: 1,
-    ..InstructionBits::DEFAULT
 };
 
 const D: InstructionBits = InstructionBits {
@@ -292,7 +288,6 @@ const fn implicit_d(value: u8) -> InstructionBits {
     InstructionBits {
         usage: InstructionBitsUsage::D,
         bit_count: 0,
-        shift: 0,
         value,
     }
 }
@@ -314,7 +309,6 @@ const fn implicit_reg(value: u8) -> InstructionBits {
     InstructionBits {
         usage: InstructionBitsUsage::Reg,
         bit_count: 0,
-        shift: 0,
         value,
     }
 }
@@ -324,7 +318,6 @@ const fn implicit_mod(value: u8) -> InstructionBits {
     InstructionBits {
         usage: InstructionBitsUsage::Mod,
         bit_count: 0,
-        shift: 0,
         value,
     }
 }
@@ -334,13 +327,12 @@ const fn implicit_rm(value: u8) -> InstructionBits {
     InstructionBits {
         usage: InstructionBitsUsage::Rm,
         bit_count: 0,
-        shift: 0,
         value,
     }
 }
 
-const END: InstructionBits = InstructionBits::DEFAULT;
-
+/// This table hold the encodings of all the instructions suported by this
+/// emulator.
 pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
     InstructionEncoding {
         op: OperationType::Mov,
@@ -350,7 +342,6 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 6,
                 value: 0b100010,
-                ..InstructionBits::DEFAULT
             },
             D,
             W,
@@ -367,7 +358,6 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 7,
                 value: 0b1100011,
-                ..InstructionBits::DEFAULT
             },
             W,
             W_MAKES_DATA_WIDE,
@@ -376,7 +366,6 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 3,
                 value: 0b000,
-                ..InstructionBits::DEFAULT
             },
             RM,
             implicit_d(0), // Destination is not in reg field
@@ -392,7 +381,6 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 4,
                 value: 0b1011,
-                ..InstructionBits::DEFAULT
             },
             W,
             REG,
@@ -410,7 +398,6 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 7,
                 value: 0b1010000,
-                ..InstructionBits::DEFAULT
             },
             W,
             implicit_d(1),       // Destination is a reg field (The accumulator)
@@ -429,13 +416,28 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 7,
                 value: 0b1010001,
-                ..InstructionBits::DEFAULT
             },
             W,
             implicit_d(0),       // Source is the reg field (The accumulator)
             implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
             implicit_mod(0b00),  // Memory mode, no displacement follows...
             implicit_rm(0b110),  // ...except when R/M = 110. Then 16 bit displacement follows
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Add,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b000000,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
         ],
     },
 ];
