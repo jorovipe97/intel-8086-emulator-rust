@@ -42,10 +42,12 @@ impl Memory {
     pub fn load_program_binary(path: &str) -> Result<Memory> {
         let readed_binary = fs::read(path)?;
         let mut memory_vec = vec![0; MAX_MEMORY];
-        for n in &readed_binary {
-            print!("{:08b} ", n);
-        }
-        println!();
+
+        // Uncomment to debug binary of loaded program.
+        // for n in &readed_binary {
+        //     print!("{:08b} ", n);
+        // }
+        // println!();
 
         if readed_binary.len() >= MAX_MEMORY {
             return Err(anyhow!(
