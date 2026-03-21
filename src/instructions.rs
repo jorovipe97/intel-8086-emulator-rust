@@ -7,6 +7,7 @@ pub enum OperationType {
     Mov,
     Add,
     Sub,
+    Cmp,
 }
 
 impl OperationType {
@@ -20,6 +21,7 @@ impl Display for OperationType {
             Self::None => write!(f, "none"),
             Self::Add => write!(f, "add"),
             Self::Sub => write!(f, "sub"),
+            Self::Cmp => write!(f, "cmp"),
         }
     }
 }
@@ -539,6 +541,63 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 7,
                 value: 0b0010110,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            // implicit_mod(0b11),  // Register mode
+            DATA,
+            DATA_IF_W,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Cmp,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b001110,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Cmp,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b100000,
+            },
+            S,
+            W,
+            implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b111,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Cmp,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0011110,
             },
             W,
             W_MAKES_DATA_WIDE,
