@@ -20,6 +20,11 @@ pub enum OperationType {
     Jne,
     Jnl,
     Jnle,
+    Jnb,
+    Jnbe,
+    Jnp,
+    Jno,
+    Jns,
 }
 
 impl OperationType {
@@ -46,6 +51,11 @@ impl Display for OperationType {
             Self::Jne => write!(f, "js"),
             Self::Jnl => write!(f, "jnl"),
             Self::Jnle => write!(f, "jnle"),
+            Self::Jnb => write!(f, "jnb"),
+            Self::Jnbe => write!(f, "jnbe"),
+            Self::Jnp => write!(f, "jnp"),
+            Self::Jno => write!(f, "jno"),
+            Self::Jns => write!(f, "jns"),
         }
     }
 }
@@ -803,6 +813,71 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 8,
                 value: 0b0111_1111,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jnb,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0011,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jnbe,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0111,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jnp,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_1011,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jno,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0001,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jns,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_1001,
             },
             IP_INC,
             // Destination is in the mod operand.
