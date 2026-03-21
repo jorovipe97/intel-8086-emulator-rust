@@ -25,6 +25,14 @@ pub enum OperationType {
     Jnp,
     Jno,
     Jns,
+    /// Loop CX times.
+    Loop,
+    /// Loop while zero/equal
+    LoopZ,
+    /// Loop while not zero/equal
+    LoopNz,
+    /// Jump on CX zero
+    Jcxz,
 }
 
 impl OperationType {
@@ -56,6 +64,10 @@ impl Display for OperationType {
             Self::Jnp => write!(f, "jnp"),
             Self::Jno => write!(f, "jno"),
             Self::Jns => write!(f, "jns"),
+            Self::Loop => write!(f, "loop"),
+            Self::LoopZ => write!(f, "loopz"),
+            Self::LoopNz => write!(f, "loopnz"),
+            Self::Jcxz => write!(f, "jcxz"),
         }
     }
 }
@@ -878,6 +890,58 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 8,
                 value: 0b0111_1001,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Loop,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_0010,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::LoopZ,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_0001,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::LoopNz,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_0000,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jcxz,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_0011,
             },
             IP_INC,
             // Destination is in the mod operand.

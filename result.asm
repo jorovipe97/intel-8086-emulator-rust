@@ -1,3 +1,21 @@
 bits 16
 je byte $+2+-2
 jl byte $+2+-4
+jle byte $+2+-6
+jb byte $+2+-8
+jbe byte $+2+-10
+jp byte $+2+-12
+jo byte $+2+-14
+js byte $+2+-16
+jnz byte $+2+-18
+jnl byte $+2+-20
+jnle byte $+2+-22
+jnb byte $+2+-24
+jnbe byte $+2+-26
+jnp byte $+2+-28
+jno byte $+2+-30
+jns byte $+2+-32
+loop byte $+2+-34
+loopz byte $+2+-36
+loopnz byte $+2+-38
+jcxz byte $+2+-40
