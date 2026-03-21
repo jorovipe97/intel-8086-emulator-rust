@@ -125,7 +125,11 @@ impl<'a> Decoder<'a> {
                 //
                 // read_bits & mask = 00100011 & 00111111 = 00100011 ✓ (extracted top 6 bits)
                 read_bits = read_bits >> bits_pending_count;
-                read_bits = read_bits & !(0xff << test_bits.bit_count)
+                let mask = match (0xff as u8).checked_shl(test_bits.bit_count as u32) {
+                    Some(m) => m,
+                    None => 0, // Overflow, just return 0. The bitwise not will turn all bits to 1.
+                };
+                read_bits = read_bits & !mask
             }
 
             // Either check if literal bits is equal, or save the fields.
@@ -184,6 +188,8 @@ impl<'a> Decoder<'a> {
         let has_mod = has[InstructionBitsUsage::Mod as usize];
         let has_d = has[InstructionBitsUsage::D as usize];
 
+        let has_ip_inc = has[InstructionBitsUsage::IpInc as usize];
+
         if has_reg {
             reg_operand = self.get_reg_operand(bits_parts[InstructionBitsUsage::Reg as usize], w)?
         }
@@ -197,6 +203,11 @@ impl<'a> Decoder<'a> {
                 let displacement = bits_parts[InstructionBitsUsage::Disp as usize];
                 mod_operand = self.get_memory_operand(mod_field, rm, displacement)?;
             }
+        }
+
+        if has_ip_inc {
+            let data = bits_parts[InstructionBitsUsage::Data as usize];
+            mod_operand = Operand::InstructionPointerIncrement(data)
         }
 
         if has_d {
@@ -214,7 +225,7 @@ impl<'a> Decoder<'a> {
         // NOTE(casey): Because there are some strange opcodes that do things like have an immediate as
         // a _destination_ ("out", for example), I define immediates and other "additional operands" to
         // go in "whatever slot was not used by the reg and mod fields".
-        if has_data {
+        if has_data && !has_ip_inc {
             let data = bits_parts[InstructionBitsUsage::Data as usize];
             if let Operand::None = result.operands.source {
                 result.operands.source = Operand::Immediate(ImmediateInfo { value: data })

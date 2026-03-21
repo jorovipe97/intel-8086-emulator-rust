@@ -52,7 +52,7 @@ impl Disassembler {
             }
         }
 
-        self.print_operand(&instruction.operands.destination);
+        self.print_operand(&instruction.operands.destination, instruction.size);
 
         // Print operand separator if both operands are not Operand::None.
         if !matches!(instruction.operands.destination, Operand::None)
@@ -61,11 +61,11 @@ impl Disassembler {
             self.string_builder.push_str(", ");
         }
 
-        self.print_operand(&instruction.operands.source);
+        self.print_operand(&instruction.operands.source, instruction.size);
         self.string_builder.push('\n');
     }
 
-    fn print_operand(&mut self, operand: &Operand) {
+    fn print_operand(&mut self, operand: &Operand, instruction_size: usize) {
         match operand {
             Operand::None => (), // no-op
             Operand::Register(reg) => {
@@ -76,6 +76,22 @@ impl Disassembler {
             }
             Operand::Immediate(imm) => {
                 self.string_builder.push_str(&imm.to_string());
+            }
+            Operand::InstructionPointerIncrement(ip_increment) => {
+                // In NASM, the $ symbol is a special token that represents the current
+                // address of the line being assembled. It is essentially a "you are here"
+                // marker for the assembler.
+                //
+                // We need to do this because if we used the offset value directly, nasm will interpret it
+                // as an absolute address.
+                //
+                // So we convert the relative offset to an absolute address so that when nasm assembles the generated assembly
+                // it returns a correct binary. This is just needed for assembler, instruction jumps are always relative according to cpu.
+                // If you look at the raw binary you will see the actual relative jump.
+                self.string_builder.push_str("$+");
+                self.string_builder.push_str(&instruction_size.to_string());
+                self.string_builder.push('+');
+                self.string_builder.push_str(&ip_increment.to_string());
             }
         }
     }

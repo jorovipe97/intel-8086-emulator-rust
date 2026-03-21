@@ -8,6 +8,7 @@ pub enum OperationType {
     Add,
     Sub,
     Cmp,
+    Jnz,
 }
 
 impl OperationType {
@@ -22,6 +23,7 @@ impl Display for OperationType {
             Self::Add => write!(f, "add"),
             Self::Sub => write!(f, "sub"),
             Self::Cmp => write!(f, "cmp"),
+            Self::Jnz => write!(f, "jnz"),
         }
     }
 }
@@ -46,8 +48,8 @@ pub enum InstructionBitsUsage {
     /// Segment registers.
     // SR,
 
-    // /// Instruction Pointer Increment.
-    // IpInc,
+    /// Instruction Pointer Increment.
+    IpInc,
 
     // Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     // TODO: Can we remove it?
@@ -167,13 +169,14 @@ impl Display for ImmediateInfo {
 /// The distint operand types that support the simulator
 #[derive(Debug, Clone, Copy)]
 pub enum Operand {
-    /// To represent that the instruction dont have this operan
+    /// To represent that the instruction dont have a given operand
     /// for example jmp instructions only have destination operand.
     /// so the source is Operand::None
     None,
     Register(RegisterInfo),
     Memory(MemoryDisplacementInfo),
-    Immediate(ImmediateInfo),
+    Immediate(ImmediateInfo), // TODO: Change to Immediate(i32)
+    InstructionPointerIncrement(i32),
 }
 
 // Holds the operands of the decoded instruction.
@@ -295,6 +298,11 @@ const DATA_IF_W: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
+const IP_INC: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::IpInc,
+    ..InstructionBits::DEFAULT
+};
+
 /// Allows to declare an implicit d, so decoder knows if whould use reg field
 /// as the destination (d==1) or the source (d==0).
 const fn implicit_d(value: u8) -> InstructionBits {
@@ -339,6 +347,14 @@ const fn implicit_mod(value: u8) -> InstructionBits {
 const fn implicit_rm(value: u8) -> InstructionBits {
     InstructionBits {
         usage: InstructionBitsUsage::Rm,
+        bit_count: 0,
+        value,
+    }
+}
+
+const fn implicit_w(value: u8) -> InstructionBits {
+    InstructionBits {
+        usage: InstructionBitsUsage::W,
         bit_count: 0,
         value,
     }
@@ -606,6 +622,29 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // implicit_mod(0b11),  // Register mode
             DATA,
             DATA_IF_W,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jnz,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0101,
+            },
+            // Altough this is x86 reference, the jmp instructions has a single destination operand.
+            // See: https://www.felixcloutier.com/x86/jmp
+            // For this case, the target operand specifies a relative offset (a signed displacement relative to the current value of the instruction pointer in the IP register).
+            // A near jump to a relative offset of 8-bits (rel8) is referred to as a short jump. The CS register is not changed on near and short jumps.
+            //
+            // The BitsIpInc is to indicate that the destination operand is an Instruction Pointer Increment
+            // However the actual data is extracted from data.
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Makes data 8-bit, as IP increment is 8-bit.
+            implicit_w(0),
+            DATA,
         ],
     },
 ];
