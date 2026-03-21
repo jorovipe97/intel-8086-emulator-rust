@@ -1,4 +1,5 @@
-use crate::instructions::{DecodedInstruction, Operand};
+use crate::instructions::decoded_instruction::DecodedInstruction;
+use crate::instructions::operands::Operand;
 use anyhow::{Context, Result};
 use std::{self, fs};
 

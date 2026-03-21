@@ -1,14 +1,10 @@
-use crate::instructions::DecodedInstruction;
 use crate::instructions::INSTRUCTION_ENCODINGS_TABLE;
-use crate::instructions::ImmediateInfo;
-use crate::instructions::InstructionBitsUsage;
-use crate::instructions::InstructionEncoding;
 use crate::instructions::MAX_INSTRUCTION_BYTE_COUNT;
-use crate::instructions::MemoryDisplacementInfo;
-use crate::instructions::Operand;
-use crate::instructions::OperationType;
-use crate::instructions::RegisterInfo;
-use crate::instructions::RegisterName;
+use crate::instructions::decoded_instruction::DecodedInstruction;
+use crate::instructions::encodings::{
+    InstructionBitsUsage, InstructionEncoding, OperationType, RegisterName,
+};
+use crate::instructions::operands::{MemoryDisplacementInfo, Operand, RegisterInfo};
 use crate::memory::{Memory, MemoryAccess};
 use anyhow::Context;
 use anyhow::Result;
@@ -230,9 +226,9 @@ impl<'a> Decoder<'a> {
         if has_data && !has_ip_inc {
             let data = bits_parts[InstructionBitsUsage::Data as usize];
             if let Operand::None = result.operands.source {
-                result.operands.source = Operand::Immediate(ImmediateInfo { value: data })
+                result.operands.source = Operand::Immediate(data)
             } else if let Operand::None = result.operands.destination {
-                result.operands.destination = Operand::Immediate(ImmediateInfo { value: data })
+                result.operands.destination = Operand::Immediate(data)
             }
         }
 
