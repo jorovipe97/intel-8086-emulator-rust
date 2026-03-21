@@ -1,8 +1,10 @@
 use crate::instructions::DecodedInstruction;
 use crate::instructions::INSTRUCTION_ENCODINGS_TABLE;
+use crate::instructions::ImmediateInfo;
 use crate::instructions::InstructionBitsUsage;
 use crate::instructions::InstructionEncoding;
 use crate::instructions::MAX_INSTRUCTION_BYTE_COUNT;
+use crate::instructions::MemoryDisplacementInfo;
 use crate::instructions::Operand;
 use crate::instructions::OperationType;
 use crate::instructions::RegisterInfo;
@@ -41,6 +43,15 @@ impl<'a> Decoder<'a> {
                 // We were able to decode the instruction, no need to keep looking for candidates.
                 break;
             }
+        }
+
+        // If could not decode using any of the candidate encodings in INSTRUCTION_ENCODINGS_TABLE
+        // return an error.
+        if result.operation == OperationType::None {
+            return Err(anyhow!(
+                "instruction is unknown, at position {}",
+                next_memory_address.absolute_address()
+            ));
         }
 
         Ok((result, next_memory_address))
@@ -161,6 +172,11 @@ impl<'a> Decoder<'a> {
         // How many bytes did move the internal cursor to decode the full instruction.
         result.size = memory_access_internal.absolute_address() - memory_access.absolute_address();
 
+        let has_w = has[InstructionBitsUsage::W as usize];
+        if has_w && w == 1 {
+            result.is_w_field_set = true
+        }
+
         let mut reg_operand = Operand::None;
         let mut mod_operand = Operand::None;
 
@@ -173,9 +189,14 @@ impl<'a> Decoder<'a> {
         }
 
         if has_mod {
-            // If MOD==0b11 (register-to-register mode), then
-            // R/M identifies the second register operand.
-            mod_operand = self.get_reg_operand(rm, w)?
+            if mod_field == 0b11 {
+                // If MOD==0b11 (register-to-register mode), then
+                // R/M identifies the second register operand.
+                mod_operand = self.get_reg_operand(rm, w)?
+            } else {
+                let displacement = bits_parts[InstructionBitsUsage::Disp as usize];
+                mod_operand = self.get_memory_operand(mod_field, rm, displacement)?;
+            }
         }
 
         if has_d {
@@ -187,6 +208,18 @@ impl<'a> Decoder<'a> {
                 // Instruction destination is specified in REG field.
                 result.operands.destination = reg_operand;
                 result.operands.source = mod_operand;
+            }
+        }
+
+        // NOTE(casey): Because there are some strange opcodes that do things like have an immediate as
+        // a _destination_ ("out", for example), I define immediates and other "additional operands" to
+        // go in "whatever slot was not used by the reg and mod fields".
+        if has_data {
+            let data = bits_parts[InstructionBitsUsage::Data as usize];
+            if let Operand::None = result.operands.source {
+                result.operands.source = Operand::Immediate(ImmediateInfo { value: data })
+            } else if let Operand::None = result.operands.destination {
+                result.operands.destination = Operand::Immediate(ImmediateInfo { value: data })
             }
         }
 
@@ -287,9 +320,9 @@ impl<'a> Decoder<'a> {
         Ok(data)
     }
 
-    const REG_TABLE: &'static [&'static [RegisterInfo]] = &[
+    const REG_TABLE: [[RegisterInfo; 2]; 8] = [
         // In each row, first item is for w=0 and second item is for w=1
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::A,
                 offset: 0,
@@ -301,7 +334,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // AX
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::C,
                 offset: 0,
@@ -313,7 +346,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // CX
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::D,
                 offset: 0,
@@ -325,7 +358,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // DX
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::B,
                 offset: 0,
@@ -337,7 +370,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // BX
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::A,
                 offset: 1,
@@ -349,7 +382,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // SP
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::C,
                 offset: 1,
@@ -361,7 +394,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // BP
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::D,
                 offset: 1,
@@ -373,7 +406,7 @@ impl<'a> Decoder<'a> {
                 count: 2,
             }, // SI
         ],
-        &[
+        [
             RegisterInfo {
                 register_name: RegisterName::B,
                 offset: 1,
@@ -394,5 +427,61 @@ impl<'a> Decoder<'a> {
             .get(w as usize)
             .ok_or_else(|| anyhow!("w field must be either 1 or 0"))
             .map(|register_info| Operand::Register(*register_info))
+    }
+
+    const MEMORY_EFFECTIVE_ADDRESS_TERMS_0_TABLE: [RegisterName; 8] = [
+        RegisterName::B,
+        RegisterName::B,
+        RegisterName::BP,
+        RegisterName::BP,
+        RegisterName::SI,
+        RegisterName::DI,
+        RegisterName::BP,
+        RegisterName::B,
+    ];
+
+    const MEMORY_EFFECTIVE_ADDRESS_TERMS_1_TABLE: [RegisterName; 8] = [
+        RegisterName::SI,
+        RegisterName::DI,
+        RegisterName::SI,
+        RegisterName::DI,
+        RegisterName::None,
+        RegisterName::None,
+        RegisterName::None,
+        RegisterName::None,
+    ];
+
+    fn get_memory_operand(&self, mod_field: i32, rm: i32, displacement: i32) -> Result<Operand> {
+        if mod_field == 0b00 && rm == 0b110 {
+            // On this case effective address calculation simpy uses
+            // a direct address.
+            return Ok(Operand::Memory(MemoryDisplacementInfo {
+                terms: [RegisterInfo::NONE, RegisterInfo::NONE],
+                displacement,
+            }));
+        }
+
+        let term0 = Self::MEMORY_EFFECTIVE_ADDRESS_TERMS_0_TABLE
+            .get(rm as usize)
+            .ok_or_else(|| anyhow!("rm field is invalid"))
+            .map(|register_name| RegisterInfo {
+                register_name: *register_name,
+                offset: 0,
+                count: 2,
+            })?;
+
+        let term1 = Self::MEMORY_EFFECTIVE_ADDRESS_TERMS_1_TABLE
+            .get(rm as usize)
+            .ok_or_else(|| anyhow!("rm field invalid"))
+            .map(|register_name| RegisterInfo {
+                register_name: *register_name,
+                count: 2,
+                offset: 0,
+            })?;
+
+        Ok(Operand::Memory(MemoryDisplacementInfo {
+            terms: [term0, term1],
+            displacement,
+        }))
     }
 }

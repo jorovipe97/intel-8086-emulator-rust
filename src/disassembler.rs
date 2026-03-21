@@ -40,10 +40,17 @@ impl Disassembler {
         // MOV byte [BX], 5   ; Store 5 as 8-bit
         // MOV word [BX], 5   ; Store 5 as 16-bit
         //
-        // If destination is not register or a insutrction pointer increment do not add size of destination.
-        // if !matches!(instruction.operands.destination, Operand::Register(_)) {
-        //     // Add word, byte depending on if the instruction is wide or not.
-        // }
+        // If destination or source is not register or a instruction pointer increment do not add size of destination.
+        if !matches!(instruction.operands.destination, Operand::Register(_))
+            && !matches!(instruction.operands.source, Operand::Register(_))
+        {
+            // Add word, byte depending on if the instruction is wide or not.
+            if instruction.is_w_field_set {
+                self.string_builder.push_str("word ");
+            } else {
+                self.string_builder.push_str("byte ");
+            }
+        }
 
         self.print_operand(&instruction.operands.destination);
 
@@ -63,6 +70,12 @@ impl Disassembler {
             Operand::None => (), // no-op
             Operand::Register(reg) => {
                 self.string_builder.push_str(&reg.to_string());
+            }
+            Operand::Memory(mem) => {
+                self.string_builder.push_str(&mem.to_string());
+            }
+            Operand::Immediate(imm) => {
+                self.string_builder.push_str(&imm.to_string());
             }
         }
     }

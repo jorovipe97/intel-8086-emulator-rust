@@ -1,2 +1,4 @@
 bits 16
-mov si, bx
+
+; Accumulator to memory test
+mov [2554], ax

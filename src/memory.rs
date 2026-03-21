@@ -43,7 +43,7 @@ impl Memory {
         let readed_binary = fs::read(path)?;
         let mut memory_vec = vec![0; MAX_MEMORY];
         for n in &readed_binary {
-            print!("{:b} ", n);
+            print!("{:08b} ", n);
         }
         println!();
 
