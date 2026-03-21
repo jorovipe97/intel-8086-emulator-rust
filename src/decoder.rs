@@ -173,8 +173,6 @@ impl<'a> Decoder<'a> {
         // TODO: internal pointer is increasde by 4 after parse_disp_value and parse_data_value
 
         result.operation = candidate_encoding.op;
-        // How many bytes did move the internal cursor to decode the full instruction.
-        result.size = memory_access_internal.absolute_address() - memory_access.absolute_address();
 
         let has_w = has[InstructionBitsUsage::W as usize];
         if has_w && w == 1 {
@@ -187,7 +185,6 @@ impl<'a> Decoder<'a> {
         let has_reg = has[InstructionBitsUsage::Reg as usize];
         let has_mod = has[InstructionBitsUsage::Mod as usize];
         let has_d = has[InstructionBitsUsage::D as usize];
-
         let has_ip_inc = has[InstructionBitsUsage::IpInc as usize];
 
         if has_reg {
@@ -206,9 +203,14 @@ impl<'a> Decoder<'a> {
         }
 
         if has_ip_inc {
-            let data = bits_parts[InstructionBitsUsage::Data as usize];
-            mod_operand = Operand::InstructionPointerIncrement(data)
+            let ip_increment = self
+                .parse_data_value(&mut memory_access_internal, has_ip_inc, data_is_w)
+                .with_context(|| "could not extract instruction pointer increment")?;
+            mod_operand = Operand::InstructionPointerIncrement(ip_increment)
         }
+
+        // How many bytes did move the internal cursor to decode the full instruction.
+        result.size = memory_access_internal.absolute_address() - memory_access.absolute_address();
 
         if has_d {
             if d == 0 {

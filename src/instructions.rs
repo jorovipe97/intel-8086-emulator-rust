@@ -9,6 +9,7 @@ pub enum OperationType {
     Sub,
     Cmp,
     Jnz,
+    Je,
 }
 
 impl OperationType {
@@ -24,6 +25,7 @@ impl Display for OperationType {
             Self::Sub => write!(f, "sub"),
             Self::Cmp => write!(f, "cmp"),
             Self::Jnz => write!(f, "jnz"),
+            Self::Je => write!(f, "je"),
         }
     }
 }
@@ -644,7 +646,28 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_d(0),
             // Makes data 8-bit, as IP increment is 8-bit.
             implicit_w(0),
-            DATA,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Je,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0100,
+            },
+            // Altough this is x86 reference, the jmp instructions has a single destination operand.
+            // See: https://www.felixcloutier.com/x86/jmp
+            // For this case, the target operand specifies a relative offset (a signed displacement relative to the current value of the instruction pointer in the IP register).
+            // A near jump to a relative offset of 8-bits (rel8) is referred to as a short jump. The CS register is not changed on near and short jumps.
+            //
+            // The BitsIpInc is to indicate that the destination operand is an Instruction Pointer Increment
+            // However the actual data is extracted from data.
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Makes data 8-bit, as IP increment is 8-bit.
+            implicit_w(0),
         ],
     },
 ];
