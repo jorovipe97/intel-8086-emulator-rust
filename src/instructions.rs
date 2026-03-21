@@ -13,6 +13,8 @@ pub enum OperationType {
     Jl,
     Jle,
     Jb,
+    Jbe,
+    Jp,
 }
 
 impl OperationType {
@@ -32,6 +34,8 @@ impl Display for OperationType {
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
             Self::Jb => write!(f, "jb"),
+            Self::Jbe => write!(f, "jbe"),
+            Self::Jp => write!(f, "jp"),
         }
     }
 }
@@ -697,7 +701,33 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             InstructionBits {
                 usage: InstructionBitsUsage::Literal,
                 bit_count: 8,
-                value: 0b0111_1110,
+                value: 0b0111_0010,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jbe,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_0110,
+            },
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Jp,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0111_1010,
             },
             IP_INC,
             // Destination is in the mod operand.
