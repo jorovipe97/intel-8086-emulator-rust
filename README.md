@@ -6,13 +6,13 @@ Here I implement a partial intel 8086 disassembler + emulator. This does not pla
 
 ## Pre-requisites
 
-* Go 1.25
-* nasm (Mac binary provided)
-* ndisasm (Mac binary provided)
+* [Just](https://github.com/casey/just)
+* [Rust](https://rust-lang.org/tools/install/)
+* [nasm/ndisasm](https://www.nasm.us/) (Mac binary provided)
 
 ## How To Run
 
-The easiest way to run it is just running [./test.sh](https://github.com/jorovipe97/performance-aware-homework/blob/main/test.sh) file, this files does the following:
+The easiest way to run is using just recipe: `just run`. If you want to run test do: `just test`
 
 1. Compiles an 8086 binary using nasm and an original assembly file.
 2. Run my emulator so it loads the produced binary, it outputs the assembly and the final values of registers and flags.
