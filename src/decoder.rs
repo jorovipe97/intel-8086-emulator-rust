@@ -1,6 +1,3 @@
-use std::any;
-use std::mem;
-
 use crate::instructions::DecodedInstruction;
 use crate::instructions::INSTRUCTION_ENCODINGS_TABLE;
 use crate::instructions::InstructionBitsUsage;
@@ -371,7 +368,7 @@ impl<'a> Decoder<'a> {
                 count: 1,
             }, // DH
             RegisterInfo {
-                register_name: RegisterName::BP,
+                register_name: RegisterName::SI,
                 offset: 0,
                 count: 2,
             }, // SI
@@ -397,20 +394,5 @@ impl<'a> Decoder<'a> {
             .get(w as usize)
             .ok_or_else(|| anyhow!("w field must be either 1 or 0"))
             .map(|register_info| Operand::Register(*register_info))
-
-        // Prev is shorthand to avoid the nested match expressions that follows:
-        // let register_row = Decoder::REG_TABLE.get(reg_flag as usize);
-        // match register_row {
-        //     None => return Err(anyhow!("no register found with specified flag")),
-        //     Some(columns) => {
-        //         let register_column = columns.get(w as usize);
-        //         match register_column {
-        //             None => return Err(anyhow!("w field must be either 1 or 0")),
-        //             Some(register_info) => {
-        //                 return Ok(Operand::Register(*register_info))
-        //             }
-        //         }
-        //     }
-        // }
     }
 }

@@ -85,14 +85,13 @@ impl Display for RegisterInfo {
             return Err(Error);
         }
 
-        let mut col: usize = 0;
-        if self.count == 2 {
-            col = 2;
+        let col: usize = if self.count == 2 {
+            2
         } else {
             // & 0b1 is a defensive progrraming thecnique,
             // in case offset is neither 0 or 1.
-            col = (self.offset as usize) & 0b1;
-        }
+            (self.offset as usize) & 0b1
+        };
 
         let register_name = REGISTERS_MAPPINGS[row][col];
         return write!(f, "{}", register_name);

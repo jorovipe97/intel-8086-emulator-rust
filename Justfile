@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0037_single_register_mov"
+file := "listings_asm/listing_0038_many_register_mov"
 
 run:
     @echo "Assembling original file..."

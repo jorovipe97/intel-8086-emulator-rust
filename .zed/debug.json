@@ -5,8 +5,8 @@
       "command": "cargo",
       "args": ["build"],
     },
-    "program": "$ZED_WORKTREE_ROOT/target/debug/simulator_8086_rust",
-    "args": ["$ZED_WORKTREE_ROOT/test_asm/listing_0037_single_register_mov"],
+    "program": "$ZED_WORKTREE_ROOT/target/debug/sim8086",
+    "args": ["$ZED_WORKTREE_ROOT/listings_asm/test"],
     // sourceLanguages is required for CodeLLDB (not GDB) when using Rust
     "sourceLanguages": ["rust"],
     "request": "launch",

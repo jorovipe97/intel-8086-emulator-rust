@@ -7,7 +7,7 @@ use sim8086::memory::{Memory, MemoryAccess};
 // Dissemble register to register
 #[test]
 fn disassemble_register_to_register() -> Result<()> {
-    let memory = Memory::load_program_binary("listings_asm/listing_0037_single_register_mov")?;
+    let memory = Memory::load_program_binary("listings_asm/listing_0038_many_register_mov")?;
     let mut memory_access = MemoryAccess::new();
 
     let decoder = Decoder::new(&memory);
@@ -34,7 +34,17 @@ fn disassemble_register_to_register() -> Result<()> {
     // We use indoc to remove tabs
     let expected = indoc!(
         "bits 16
-        mov cx, bx\n"
+        mov cx, bx
+        mov ch, ah
+        mov dx, bx
+        mov si, bx
+        mov bx, di
+        mov al, cl
+        mov ch, ch
+        mov bx, ax
+        mov bx, si
+        mov sp, di
+        mov bp, ax\n"
     );
     assert_eq!(result, expected);
 
