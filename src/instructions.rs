@@ -28,6 +28,9 @@ pub enum InstructionBitsUsage {
     End,
     Literal,
     D,
+
+    /// If S = 0; No sign extension.
+    /// If S = 1; Sign extend 8-bit immediate data to 16 bits.
     S,
     W,
     Mod,
@@ -265,6 +268,12 @@ const W_MAKES_DATA_WIDE: InstructionBits = InstructionBits {
     value: 1,
 };
 
+const S: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::S,
+    bit_count: 1,
+    ..InstructionBits::DEFAULT
+};
+
 const D: InstructionBits = InstructionBits {
     usage: InstructionBitsUsage::D,
     bit_count: 1,
@@ -438,6 +447,47 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             MOD,
             REG,
             RM,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Add,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b100000,
+            },
+            S,
+            W,
+            implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+    },
+    InstructionEncoding {
+        op: OperationType::Add,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0000010,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            // implicit_mod(0b11),  // Register mode
+            DATA,
+            DATA_IF_W,
         ],
     },
 ];

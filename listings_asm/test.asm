@@ -1,3 +1,3 @@
 bits 16
 
-add bx, [bx+si]
+add ax, 1000
