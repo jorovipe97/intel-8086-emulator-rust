@@ -23,9 +23,10 @@ impl<'a> Decoder<'a> {
         return (memory_access.absolute_address() + 1) < self.memory.program_size();
     }
 
-    // TODO: Make this method indicate action, eg_ decode_instruction.
-    // Returns the decoded instruction and a new memory_access instance with the beginning of the enxt instruction.
-    pub fn current_instruction(
+    /// Reads the memory at the memory_access position and decode the machine code binary into a recognized instruction.
+    ///
+    /// Returns the decoded instruction and a new memory_access instance with the beginning of the next instruction.
+    pub fn decode_machine_code(
         &self,
         memory_access: MemoryAccess,
     ) -> Result<(DecodedInstruction, MemoryAccess)> {

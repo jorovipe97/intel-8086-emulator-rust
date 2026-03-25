@@ -30,7 +30,7 @@ fn main() -> Result<()> {
             // The decoder instance just lives during this scope, and then
             // is droped, releasing the borrowed memory so it can be mutable borrowed after.
             Decoder::new(&memory)
-                .current_instruction(memory_access)
+                .decode_machine_code(memory_access)
                 .with_context(|| "failed decoding current instruction")?
         };
         disassembler.add_instruction(&instruction);

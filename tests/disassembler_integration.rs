@@ -20,7 +20,7 @@ fn disassemble_register_to_register() -> Result<()> {
         }
 
         let (instruction, new_memory_access) = decoder
-            .current_instruction(memory_access)
+            .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
@@ -67,7 +67,7 @@ fn disassemble_mov_modes() -> Result<()> {
         }
 
         let (instruction, new_memory_access) = decoder
-            .current_instruction(memory_access)
+            .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
@@ -114,7 +114,7 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
         }
 
         let (instruction, new_memory_access) = decoder
-            .current_instruction(memory_access)
+            .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
