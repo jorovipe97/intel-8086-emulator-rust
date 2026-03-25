@@ -135,7 +135,7 @@ pub enum InstructionBitsUsage {
     Data,
     WMakesDataWide,
     /// Segment registers.
-    // SR,
+    SR,
 
     /// Instruction Pointer Increment.
     IpInc,

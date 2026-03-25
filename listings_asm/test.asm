@@ -1,5 +1,6 @@
 
 bits 16
 
-mov bx, 2
-mov ax, 1
+mov ax, 20
+mov ss, ax
+mov bx, ss

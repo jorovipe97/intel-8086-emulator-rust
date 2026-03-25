@@ -86,6 +86,52 @@ impl Display for MemoryDisplacementInfo {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum SegmentRegisterName {
+    /// Extra Segment
+    ES,
+    /// Code Segment
+    CS,
+    /// Stack Segment
+    SS,
+    /// Data Segment
+    DS,
+    None,
+}
+
+impl SegmentRegisterName {
+    /// Constructs a SegmentRegisterName variant from a i32.
+    pub fn from_i32(val: i32) -> Self {
+        match val & 0b11 {
+            0 => Self::ES,
+            1 => Self::CS,
+            2 => Self::SS,
+            3 => Self::DS,
+            _ => Self::None,
+        }
+    }
+
+    pub fn to_index(self) -> usize {
+        let index = self as usize;
+        if index >= 4 {
+            return 0;
+        }
+        return index;
+    }
+}
+
+impl Display for SegmentRegisterName {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            Self::ES => write!(f, "es"),
+            Self::CS => write!(f, "cs"),
+            Self::SS => write!(f, "ss"),
+            Self::DS => write!(f, "ds"),
+            Self::None => write!(f, "segment_none"),
+        }
+    }
+}
+
 /// The distint operand types that support the simulator
 #[derive(Debug, Clone, Copy)]
 pub enum Operand {
@@ -97,4 +143,5 @@ pub enum Operand {
     Memory(MemoryDisplacementInfo),
     Immediate(i32),
     InstructionPointerIncrement(i32),
+    SegmentRegister(SegmentRegisterName),
 }

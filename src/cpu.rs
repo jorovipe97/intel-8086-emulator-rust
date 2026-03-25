@@ -6,7 +6,7 @@ use crate::{
     instructions::{
         decoded_instruction::DecodedInstruction,
         encodings::{OperationType, RegisterName},
-        operands::Operand,
+        operands::{Operand, SegmentRegisterName},
     },
     memory::MemoryAccess,
 };
@@ -86,7 +86,7 @@ impl Cpu {
                 ));
             }
             Operand::Memory(_) => {
-                return Err(anyhow!("destination memory operand is not supported"));
+                return Err(anyhow!("destination memory operand is not supported yet"));
             }
             Operand::Register(reg) => {
                 // TODO: Move to RegisterName function.
@@ -114,6 +114,9 @@ impl Cpu {
                     self.registers[reg_index] = final_value;
                 }
             }
+            Operand::SegmentRegister(segment_register) => {
+                self.segment_registers[segment_register.to_index()] = final_value;
+            }
             Operand::InstructionPointerIncrement(_) => {
                 return Err(anyhow!("instruction pointer not supported yet"));
             }
@@ -125,9 +128,13 @@ impl Cpu {
     fn get_operand_value(&self, operand: Operand) -> Result<u16> {
         match operand {
             Operand::None => Ok(0), // Zero value, this is a no-op
+            Operand::SegmentRegister(segment_register) => {
+                Ok(self.segment_registers[segment_register.to_index()])
+            }
             Operand::Immediate(v) => Ok(v as u16),
             Operand::Register(reg) => {
                 // Get the index of the register using register name enum's value.
+                // TODO: Create to index method on the enum to get a usize.
                 let reg_index = reg.register_name as usize;
                 if reg_index > 8 {
                     return Err(anyhow!("register name in insntruction is invalid"));
@@ -157,51 +164,76 @@ impl Display for Cpu {
         write!(f, "General Purposes Registers:\n")?;
         write!(
             f,
-            "\t - AX: {} ({:08b})\n",
+            "\t - AX: {:04x} ({})\n",
             self.registers[RegisterName::A as usize],
             self.registers[RegisterName::A as usize]
         )?;
         write!(
             f,
-            "\t - BX: {} ({:08b})\n",
+            "\t - BX: {:04x} ({})\n",
             self.registers[RegisterName::B as usize],
             self.registers[RegisterName::B as usize],
         )?;
         write!(
             f,
-            "\t - CX: {} ({:08b})\n",
+            "\t - CX: {:04x} ({})\n",
             self.registers[RegisterName::C as usize],
             self.registers[RegisterName::C as usize]
         )?;
         write!(
             f,
-            "\t - DX: {} ({:08b})\n",
+            "\t - DX: {:04x} ({})\n",
             self.registers[RegisterName::D as usize],
             self.registers[RegisterName::D as usize],
         )?;
         write!(
             f,
-            "\t - SP: {} ({:08b})\n",
+            "\t - SP: {:04x} ({})\n",
             self.registers[RegisterName::SP as usize],
             self.registers[RegisterName::SP as usize],
         )?;
         write!(
             f,
-            "\t - BP: {} ({:08b})\n",
+            "\t - BP: {:04x} ({})\n",
             self.registers[RegisterName::BP as usize],
             self.registers[RegisterName::BP as usize]
         )?;
         write!(
             f,
-            "\t - SI: {} ({:08b})\n",
+            "\t - SI: {:04x} ({})\n",
             self.registers[RegisterName::SI as usize],
             self.registers[RegisterName::SI as usize]
         )?;
         write!(
             f,
-            "\t - DI: {} ({:08b})\n",
+            "\t - DI: {:04x} ({})\n\n",
             self.registers[RegisterName::DI as usize],
             self.registers[RegisterName::DI as usize]
+        )?;
+        write!(f, "Segment Registers:\n")?;
+        write!(
+            f,
+            "\t - ES: {:04x} ({})\n",
+            self.segment_registers[SegmentRegisterName::ES.to_index()],
+            self.segment_registers[SegmentRegisterName::ES.to_index()]
+        )?;
+        write!(
+            f,
+            "\t - CS: {:04x} ({})\n",
+            self.segment_registers[SegmentRegisterName::CS.to_index()],
+            self.segment_registers[SegmentRegisterName::CS.to_index()]
+        )?;
+        write!(
+            f,
+            "\t - SS: {:04x} ({})\n",
+            self.segment_registers[SegmentRegisterName::SS.to_index()],
+            self.segment_registers[SegmentRegisterName::SS.to_index()]
+        )?;
+        write!(
+            f,
+            "\t - DS: {:04x} ({})\n",
+            self.segment_registers[SegmentRegisterName::DS.to_index()],
+            self.segment_registers[SegmentRegisterName::DS.to_index()]
         )
     }
 }

@@ -4,6 +4,7 @@ use crate::instructions::decoded_instruction::DecodedInstruction;
 use crate::instructions::encodings::{
     InstructionBitsUsage, InstructionEncoding, OperationType, RegisterName,
 };
+use crate::instructions::operands::SegmentRegisterName;
 use crate::instructions::operands::{MemoryDisplacementInfo, Operand, RegisterInfo};
 use crate::memory::{Memory, MemoryAccess};
 use anyhow::Context;
@@ -179,11 +180,18 @@ impl<'a> Decoder<'a> {
 
         let has_reg = has[InstructionBitsUsage::Reg as usize];
         let has_mod = has[InstructionBitsUsage::Mod as usize];
-        let has_d = has[InstructionBitsUsage::D as usize];
         let has_ip_inc = has[InstructionBitsUsage::IpInc as usize];
+        let has_segment_register = has[InstructionBitsUsage::SR as usize];
+        let has_d = has[InstructionBitsUsage::D as usize];
 
         if has_reg {
             reg_operand = self.get_reg_operand(bits_parts[InstructionBitsUsage::Reg as usize], w)?
+        }
+
+        if has_segment_register {
+            reg_operand = Operand::SegmentRegister(SegmentRegisterName::from_i32(
+                bits_parts[InstructionBitsUsage::SR as usize],
+            ))
         }
 
         if has_mod {

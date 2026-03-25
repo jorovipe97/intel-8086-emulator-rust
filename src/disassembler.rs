@@ -78,6 +78,9 @@ impl Disassembler {
             Operand::Immediate(imm) => {
                 self.string_builder.push_str(&imm.to_string());
             }
+            Operand::SegmentRegister(seg) => {
+                self.string_builder.push_str(&seg.to_string());
+            }
             Operand::InstructionPointerIncrement(ip_increment) => {
                 // In NASM, the $ symbol is a special token that represents the current
                 // address of the line being assembled. It is essentially a "you are here"

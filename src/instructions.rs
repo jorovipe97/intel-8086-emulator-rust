@@ -24,6 +24,12 @@ const RM: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
+const SR: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::SR,
+    bit_count: 2,
+    ..InstructionBits::DEFAULT
+};
+
 const W: InstructionBits = InstructionBits {
     usage: InstructionBitsUsage::W,
     bit_count: 1,
@@ -64,7 +70,7 @@ const IP_INC: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
-/// Allows to declare an implicit d, so decoder knows if whould use reg field
+/// Allows to declare an implicit d, so decoder knows if should use reg field
 /// as the destination (d==1) or the source (d==0).
 const fn implicit_d(value: u8) -> InstructionBits {
     InstructionBits {
@@ -85,6 +91,16 @@ const fn implicit_d(value: u8) -> InstructionBits {
 //         }
 //     }};
 // }
+
+/// Allows to declare an implicit w, so decoder knows if should use reg of 16 bits
+/// or 8 bits.
+const fn implicit_w(value: u8) -> InstructionBits {
+    InstructionBits {
+        usage: InstructionBitsUsage::W,
+        bit_count: 0,
+        value,
+    }
+}
 
 /// Allows to declare an implicit reg, so decoder will always decode to the given reg
 const fn implicit_reg(value: u8) -> InstructionBits {
@@ -218,6 +234,50 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
             implicit_mod(0b00),  // Memory mode, no displacement follows...
             implicit_rm(0b110),  // ...except when R/M = 110. Then 16 bit displacement follows
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::Mov,
+        bits: &[
+            InstructionBits {
+                // Register/memory to segment register.
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1000_1110,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 1,
+                value: 0b0,
+            },
+            SR,
+            RM,
+            implicit_w(1), // We assumme always wide, as segment register only support 16 bits data.
+            implicit_d(1), // Segment register acts as destination.
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::Mov,
+        bits: &[
+            InstructionBits {
+                // Segment register to Register/Memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1000_1100,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 1,
+                value: 0b0,
+            },
+            SR,
+            RM,
+            implicit_w(1), // We assumme always wide, as segment register only support 16 bits data.
+            implicit_d(0), // Segment register acts as source.
         ],
         affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
