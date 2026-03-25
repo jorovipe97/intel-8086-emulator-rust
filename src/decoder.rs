@@ -19,10 +19,6 @@ impl<'a> Decoder<'a> {
         Decoder { memory }
     }
 
-    pub fn has_more_instructions(&self, memory_access: MemoryAccess) -> bool {
-        return (memory_access.absolute_address() + 1) < self.memory.program_size();
-    }
-
     /// Reads the memory at the memory_access position and decode the machine code binary into a recognized instruction.
     ///
     /// Returns the decoded instruction and a new memory_access instance with the beginning of the next instruction.
