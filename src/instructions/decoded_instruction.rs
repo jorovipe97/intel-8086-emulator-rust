@@ -1,3 +1,5 @@
+use crate::instructions::encodings::CpuFlags;
+
 use super::encodings::OperationType;
 use super::operands::Operand;
 
@@ -21,6 +23,8 @@ pub struct DecodedInstruction {
 
     /// Do this instruction have the W flag set to 1?
     pub is_w_field_set: bool,
+
+    pub affected_cpu_flags: CpuFlags,
 }
 
 impl DecodedInstruction {
@@ -32,5 +36,6 @@ impl DecodedInstruction {
             source: Operand::None,
         },
         is_w_field_set: false,
+        affected_cpu_flags: CpuFlags::empty(),
     };
 }

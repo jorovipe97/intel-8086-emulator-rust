@@ -1,4 +1,49 @@
+use bitflags::{bitflags, bitflags_match};
 use std::fmt::{Display, Formatter, Result};
+
+bitflags! {
+    #[derive(Debug, PartialEq, Copy, Clone)]
+    pub struct CpuFlags: u16 {
+        /// Carry Flag (CF) - this flag is set to 1 when there is an unsigned overflow.
+        /// For example when you add bytes 255 + 1 (result is not in range 0...255).
+        /// When there is no overflow this flag is set to 0.
+        const CF = 1 << 0;
+
+        /// Parity Flag (PF) - this flag is set to 1 when there is even number of one bits in result,
+        /// and to 0 when there is odd number of one bits.
+        /// Even if result is a word only 8 low bits are analyzed!
+        const PF = 1 << 1;
+
+        /// Auxiliary Flag (AF) - set to 1 when there is an unsigned overflow for low nibble (4 bits).
+        const AF = 1 << 2;
+
+        /// Zero Flag (ZF) - set to 1 when result is zero. For none zero result this flag is set to 0.
+        const ZF = 1 << 3;
+
+        /// Sign Flag (SF) - set to 1 when result is negative. When result is positive it is set to 0.
+        /// Actually this flag take the value of the most significant bit.
+        const SF = 1 << 4;
+
+        /// Overflow Flag (OF) - set to 1 when there is a signed overflow. For example,
+        /// when you add bytes 100 + 50 (result is not in range -128...127).
+        const OF = 1 << 5;
+    }
+}
+
+impl CpuFlags {
+    /// Returns the position of the flag on the eflags register of the CPU.
+    pub fn to_flag_position(self) -> u16 {
+        bitflags_match!(self, {
+            CpuFlags::CF => 0,
+            CpuFlags::PF => 2,
+            CpuFlags::AF => 4,
+            CpuFlags::ZF => 6,
+            CpuFlags::SF => 7,
+            CpuFlags::OF => 11,
+            _ => 15, // The final, default arm is required, othewise the macro will fail to compile.
+        })
+    }
+}
 
 /// Represents all possible instructions supported by the simulator
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -144,4 +189,7 @@ pub struct InstructionEncoding {
     // We use 'static lifetime because we want this to be at the executable
     // and know this will never change.
     pub bits: &'static [InstructionBits],
+
+    /// The CPU affected flags, when this operation is executed by the CPU.
+    pub affected_cpu_flags: CpuFlags,
 }

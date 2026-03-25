@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0041_add_sub_cmp_jnz"
+file := "listings_asm/listing_0044_register_movs"
 
 run:
     @echo "Assembling original file..."

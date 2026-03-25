@@ -23,6 +23,7 @@ impl<'a> Decoder<'a> {
         return (memory_access.absolute_address() + 1) < self.memory.program_size();
     }
 
+    // TODO: Make this method indicate action, eg_ decode_instruction.
     // Returns the decoded instruction and a new memory_access instance with the beginning of the enxt instruction.
     pub fn current_instruction(
         &self,
@@ -169,6 +170,7 @@ impl<'a> Decoder<'a> {
         // TODO: internal pointer is increasde by 4 after parse_disp_value and parse_data_value
 
         result.operation = candidate_encoding.op;
+        result.affected_cpu_flags = candidate_encoding.affected_cpu_flags;
 
         let has_w = has[InstructionBitsUsage::W as usize];
         if has_w && w == 1 {

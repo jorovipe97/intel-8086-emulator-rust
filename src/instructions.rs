@@ -4,6 +4,8 @@ pub mod operands;
 
 use encodings::{InstructionBits, InstructionBitsUsage, InstructionEncoding, OperationType};
 
+use crate::instructions::encodings::CpuFlags;
+
 const MOD: InstructionBits = InstructionBits {
     usage: InstructionBitsUsage::Mod,
     bit_count: 2,
@@ -111,6 +113,15 @@ const fn implicit_rm(value: u8) -> InstructionBits {
     }
 }
 
+const ARITHMETIC_AND_LOGIC_FLAGS: CpuFlags = CpuFlags::from_bits_truncate(
+    CpuFlags::CF.bits()
+        | CpuFlags::ZF.bits()
+        | CpuFlags::SF.bits()
+        | CpuFlags::OF.bits()
+        | CpuFlags::PF.bits()
+        | CpuFlags::AF.bits(),
+);
+
 /// This table hold the encodings of all the instructions suported by this
 /// emulator.
 pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
@@ -129,6 +140,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             REG,
             RM,
         ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
         op: OperationType::Mov,
@@ -152,6 +164,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
         op: OperationType::Mov,
@@ -163,11 +176,13 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 value: 0b1011,
             },
             W,
+            W_MAKES_DATA_WIDE,
             REG,
             implicit_d(1),
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
         op: OperationType::Mov,
@@ -185,6 +200,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_mod(0b00),  // Memory mode, no displacement follows...
             implicit_rm(0b110),  // ...except when R/M = 110. Then 16 bit displacement follows
         ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
         op: OperationType::Mov,
@@ -203,6 +219,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_mod(0b00),  // Memory mode, no displacement follows...
             implicit_rm(0b110),  // ...except when R/M = 110. Then 16 bit displacement follows
         ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
         op: OperationType::Add,
@@ -219,6 +236,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             REG,
             RM,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Add,
@@ -242,6 +260,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Add,
@@ -260,6 +279,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Sub,
@@ -276,6 +296,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             REG,
             RM,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Sub,
@@ -299,6 +320,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Sub,
@@ -317,6 +339,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Cmp,
@@ -333,6 +356,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             REG,
             RM,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Cmp,
@@ -356,6 +380,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Cmp,
@@ -374,6 +399,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             DATA,
             DATA_IF_W,
         ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
         op: OperationType::Jnz,
@@ -394,6 +420,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Je,
@@ -407,6 +434,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jl,
@@ -420,6 +448,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jle,
@@ -433,6 +462,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jb,
@@ -446,6 +476,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jbe,
@@ -459,6 +490,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jp,
@@ -472,6 +504,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jo,
@@ -485,6 +518,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Js,
@@ -498,6 +532,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jne,
@@ -511,6 +546,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jnl,
@@ -524,6 +560,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jnle,
@@ -537,6 +574,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jnb,
@@ -550,6 +588,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jnbe,
@@ -563,6 +602,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jnp,
@@ -576,6 +616,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jno,
@@ -589,6 +630,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jns,
@@ -602,6 +644,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Loop,
@@ -615,6 +658,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::LoopZ,
@@ -628,6 +672,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::LoopNz,
@@ -641,6 +686,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
         op: OperationType::Jcxz,
@@ -654,6 +700,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             // Destination is in the mod operand.
             implicit_d(0),
         ],
+        affected_cpu_flags: CpuFlags::empty(),
     },
 ];
 

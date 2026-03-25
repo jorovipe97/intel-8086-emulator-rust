@@ -85,4 +85,6 @@ impl Memory {
             None => return Err(anyhow!("accessing invalid memory")),
         }
     }
+
+    pub fn write(&mut self) {}
 }
