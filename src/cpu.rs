@@ -5,7 +5,7 @@ use anyhow::{Result, anyhow};
 use crate::{
     instructions::{
         decoded_instruction::DecodedInstruction,
-        encodings::{OperationType, RegisterName},
+        encodings::{CpuFlags, OperationType, RegisterName},
         operands::{Operand, SegmentRegisterName},
     },
     memory::MemoryAccess,
@@ -69,6 +69,8 @@ impl Cpu {
         };
 
         // Computes flags
+        self.compute_zf(&instruction, final_value);
+        self.compute_sf(&instruction, final_value);
 
         // Check if instruction is a cmp, This instructions does not writes to destination
         // operand, just affects flags, this instruction is usually used to control the program
@@ -156,6 +158,54 @@ impl Cpu {
             // TODO: How are we going to do an immutable borrow to the memory?
             Operand::Memory(_) => Err(anyhow!("simulator still not supports memory operands")),
         }
+    }
+
+    fn compute_zf(&mut self, instruction: &DecodedInstruction, final_value: u16) {
+        if !instruction.affected_cpu_flags.contains(CpuFlags::ZF) {
+            return;
+        }
+
+        if final_value == 0 {
+            self.set_flag(CpuFlags::ZF);
+        } else {
+            self.clear_flag(CpuFlags::ZF);
+        }
+    }
+
+    fn compute_sf(&mut self, instruction: &DecodedInstruction, final_value: u16) {
+        if !instruction.affected_cpu_flags.contains(CpuFlags::SF) {
+            return;
+        }
+
+        if instruction.is_w_field_set {
+            if (final_value & (1 << 15)) != 0 {
+                self.set_flag(CpuFlags::SF);
+            } else {
+                self.clear_flag(CpuFlags::SF);
+            }
+        } else {
+            if (final_value & (1 << 7)) != 0 {
+                self.set_flag(CpuFlags::SF);
+            } else {
+                self.set_flag(CpuFlags::SF);
+            }
+        }
+    }
+
+    /// Set a flag
+    fn set_flag(&mut self, flag: CpuFlags) {
+        // sets new value into flag position
+        self.flags = self.flags | flag.bits();
+    }
+
+    fn clear_flag(&mut self, flag: CpuFlags) {
+        // Resets flag position
+        self.flags = self.flags & !flag.bits();
+    }
+
+    /// Check if the CpuFlag is set.
+    fn is_flag_set(&self, flag: CpuFlags) -> bool {
+        (self.flags & flag.bits()) > 0
     }
 }
 
