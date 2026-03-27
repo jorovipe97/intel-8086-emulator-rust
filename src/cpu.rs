@@ -13,12 +13,12 @@ use crate::{
 
 pub struct Cpu {
     /// General purpose registers
-    registers: [u16; 8],
+    pub registers: [u16; 8],
     /// Instruction pointer register
     // instruction_pointer: usize,
     /// Extra Segment (ES), Code Segment (CS), Stack Segment (SS), Data Segment (DS)
-    segment_registers: [u16; 4],
-    flags: u16,
+    pub segment_registers: [u16; 4],
+    pub flags: u16,
 }
 
 impl Cpu {
