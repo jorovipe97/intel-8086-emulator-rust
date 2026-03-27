@@ -15,10 +15,6 @@ fn disassemble_register_to_register() -> Result<()> {
 
     disassembler.add_bits_16_header();
     loop {
-        if !decoder.has_more_instructions(memory_access) {
-            break;
-        }
-
         let (instruction, new_memory_access) = decoder
             .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
@@ -27,6 +23,11 @@ fn disassemble_register_to_register() -> Result<()> {
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
     }
 
     let result = disassembler.build();
@@ -62,10 +63,6 @@ fn disassemble_mov_modes() -> Result<()> {
 
     disassembler.add_bits_16_header();
     loop {
-        if !decoder.has_more_instructions(memory_access) {
-            break;
-        }
-
         let (instruction, new_memory_access) = decoder
             .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
@@ -74,6 +71,11 @@ fn disassemble_mov_modes() -> Result<()> {
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
     }
 
     let result = disassembler.build();
@@ -109,10 +111,6 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
 
     disassembler.add_bits_16_header();
     loop {
-        if !decoder.has_more_instructions(memory_access) {
-            break;
-        }
-
         let (instruction, new_memory_access) = decoder
             .decode_machine_code(memory_access)
             .with_context(|| "failed decoding current instruction")?;
@@ -121,6 +119,11 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
     }
 
     let result = disassembler.build();

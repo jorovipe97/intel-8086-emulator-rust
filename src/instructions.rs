@@ -309,6 +309,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             },
             S,
             W,
+            W_MAKES_DATA_WIDE,
             implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
             MOD,
             InstructionBits {
@@ -369,6 +370,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             },
             S,
             W,
+            W_MAKES_DATA_WIDE,
             implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
             MOD,
             InstructionBits {
@@ -429,6 +431,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             },
             S,
             W,
+            W_MAKES_DATA_WIDE,
             implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
             MOD,
             InstructionBits {

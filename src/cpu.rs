@@ -15,7 +15,7 @@ pub struct Cpu {
     /// General purpose registers
     registers: [u16; 8],
     /// Instruction pointer register
-    instruction_pointer: usize,
+    // instruction_pointer: usize,
     /// Extra Segment (ES), Code Segment (CS), Stack Segment (SS), Data Segment (DS)
     segment_registers: [u16; 4],
     flags: u16,
@@ -25,7 +25,7 @@ impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
             registers: [0; 8],
-            instruction_pointer: 0,
+            // instruction_pointer: 0,
             segment_registers: [0; 4],
             flags: 0,
         }
@@ -71,6 +71,10 @@ impl Cpu {
         // Computes flags
         self.compute_zf(&instruction, final_value);
         self.compute_sf(&instruction, final_value);
+        self.compute_pf(&instruction, final_value);
+        self.compute_cf(&instruction, destination_value, source_value, final_value);
+        self.compute_af(&instruction, destination_value, source_value, final_value);
+        self.compute_of(&instruction, destination_value, source_value, final_value);
 
         // Check if instruction is a cmp, This instructions does not writes to destination
         // operand, just affects flags, this instruction is usually used to control the program
@@ -192,6 +196,171 @@ impl Cpu {
         }
     }
 
+    fn compute_pf(&mut self, instruction: &DecodedInstruction, final_value: u16) {
+        if !instruction.affected_cpu_flags.contains(CpuFlags::PF) {
+            return;
+        }
+
+        if ((final_value as u8).count_ones() & 1) == 0 {
+            // If final values is even number of 1 in the lowest byte
+            self.set_flag(CpuFlags::PF);
+        } else {
+            self.clear_flag(CpuFlags::PF);
+        }
+    }
+
+    fn compute_cf(
+        &mut self,
+        instruction: &DecodedInstruction,
+        destination_value: u16,
+        source_value: u16,
+        final_value: u16,
+    ) {
+        // https://www.youtube.com/watch?v=F20rPdjGI8k
+        if !instruction.affected_cpu_flags.contains(CpuFlags::CF) {
+            return;
+        }
+
+        // Overflow calculation, depends on the operation
+        if instruction.operation == OperationType::Add {
+            // If the final value is lower than one of the operands
+            // then is because there happened an overflow.
+            if final_value < destination_value {
+                self.set_flag(CpuFlags::CF);
+            } else {
+                self.clear_flag(CpuFlags::CF);
+            }
+        } else if instruction.operation == OperationType::Cmp
+            || instruction.operation == OperationType::Sub
+        {
+            // if first operand is lower than second one, then it will result in a negative
+            // which is an overflow
+            if destination_value < source_value {
+                self.set_flag(CpuFlags::CF);
+            } else {
+                self.clear_flag(CpuFlags::CF);
+            }
+        }
+    }
+
+    fn compute_af(
+        &mut self,
+        instruction: &DecodedInstruction,
+        destination_value: u16,
+        source_value: u16,
+        final_value: u16,
+    ) {
+        // https://www.youtube.com/watch?v=F20rPdjGI8k
+        if !instruction.affected_cpu_flags.contains(CpuFlags::AF) {
+            return;
+        }
+
+        // Overflow calculation, depends on the operation
+        if instruction.operation == OperationType::Add {
+            // If the final value is lower than one of the operands
+            // then is because there happened an overflow.
+            if (final_value & 0x0f) < (destination_value & 0x0f) {
+                self.set_flag(CpuFlags::AF);
+            } else {
+                self.clear_flag(CpuFlags::AF);
+            }
+        } else if instruction.operation == OperationType::Cmp
+            || instruction.operation == OperationType::Sub
+        {
+            // if first operand is lower than second one, then it will result in a negative
+            // which is an overflow
+            if (destination_value & 0x0f) < (source_value & 0x0f) {
+                self.set_flag(CpuFlags::AF);
+            } else {
+                self.clear_flag(CpuFlags::AF);
+            }
+        }
+    }
+
+    fn compute_of(
+        &mut self,
+        instruction: &DecodedInstruction,
+        destination_value: u16,
+        source_value: u16,
+        final_value: u16,
+    ) {
+        if !instruction.affected_cpu_flags.contains(CpuFlags::OF) {
+            return;
+        }
+
+        if instruction.operation == OperationType::Add {
+            if instruction.is_w_field_set {
+                // TODO: Can check sign without casting, just using most significative bit flag.
+                // If operands are positive but result is negative, an overflow happened.
+                let positive_overflow = (destination_value as i16) >= 0
+                    && (source_value as i16) >= 0
+                    && (final_value as i16) < 0;
+
+                // If operands are negative but result is positive or 0, an overflow happened
+                let negative_overflow = (destination_value as i16) <= 0
+                    && (source_value as i16) <= 0
+                    && (final_value as i16) >= 0;
+
+                if positive_overflow || negative_overflow {
+                    self.set_flag(CpuFlags::OF);
+                } else {
+                    self.clear_flag(CpuFlags::OF);
+                }
+            } else {
+                // If operands are positive but result is negative, an overflow happened.
+                let positive_overflow = (destination_value as i8) >= 0
+                    && (source_value as i8) >= 0
+                    && (final_value as i8) < 0;
+
+                // If operands are negative but result is positive or 0, an overflow happened
+                let negative_overflow = (destination_value as i8) <= 0
+                    && (source_value as i8) <= 0
+                    && (final_value as i8) >= 0;
+
+                if positive_overflow || negative_overflow {
+                    self.set_flag(CpuFlags::OF);
+                } else {
+                    self.clear_flag(CpuFlags::OF);
+                }
+            }
+        } else if instruction.operation == OperationType::Cmp
+            || instruction.operation == OperationType::Sub
+        {
+            // For sub, an overflow happens if operands have different sign
+            // and the result have a sign different to the first operand
+            // then an overflow happened
+            let most_significate_bit: u16 = if instruction.is_w_field_set {
+                1 << 15
+            } else {
+                1 << 7
+            };
+
+            // For example if:
+            // 1000 0010 ^
+            // 0000 1010
+            // ---------
+            // 1000 1000 (Note the most significate bit is 1, then a negative result indicates signs are different)
+            // We cast to int16, so the result give us a negative number when msb is 1.
+            //
+            // Note this, is similar to the Add case, however since operator is a sub the conditions in which
+            // can happen a possitive or negative overflow change a bit.
+            //
+            // If most significative bit is 1, then operand signs are different.
+            let are_operands_signs_different =
+                ((destination_value ^ source_value) & most_significate_bit) == most_significate_bit;
+
+            // Did result sign changed from sign of first operand?
+            let did_result_changed_sign =
+                ((destination_value ^ final_value) & most_significate_bit) == most_significate_bit;
+
+            if are_operands_signs_different && did_result_changed_sign {
+                self.set_flag(CpuFlags::OF);
+            } else {
+                self.clear_flag(CpuFlags::OF);
+            }
+        }
+    }
+
     /// Set a flag
     fn set_flag(&mut self, flag: CpuFlags) {
         // sets new value into flag position
@@ -211,6 +380,7 @@ impl Cpu {
 
 impl Display for Cpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "===================================\n")?;
         write!(f, "General Purposes Registers:\n")?;
         write!(
             f,
@@ -281,9 +451,29 @@ impl Display for Cpu {
         )?;
         write!(
             f,
-            "\t - DS: {:04x} ({})\n",
+            "\t - DS: {:04x} ({})\n\n",
             self.segment_registers[SegmentRegisterName::DS.to_index()],
             self.segment_registers[SegmentRegisterName::DS.to_index()]
-        )
+        )?;
+        write!(f, "Flags:\n")?;
+        if self.is_flag_set(CpuFlags::CF) {
+            write!(f, "\t - CF\n")?;
+        }
+        if self.is_flag_set(CpuFlags::PF) {
+            write!(f, "\t - PF\n")?;
+        }
+        if self.is_flag_set(CpuFlags::AF) {
+            write!(f, "\t - AF\n")?;
+        }
+        if self.is_flag_set(CpuFlags::ZF) {
+            write!(f, "\t - ZF\n")?;
+        }
+        if self.is_flag_set(CpuFlags::SF) {
+            write!(f, "\t - SF\n")?;
+        }
+        if self.is_flag_set(CpuFlags::OF) {
+            write!(f, "\t - OF\n")?;
+        }
+        write!(f, "===================================\n")
     }
 }
