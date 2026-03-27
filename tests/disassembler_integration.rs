@@ -272,3 +272,81 @@ fn cpu_testing_add_sub_cmp() -> Result<()> {
 
     Ok(())
 }
+
+// Cpu testing flags, challenge
+#[test]
+fn cpu_testing_challenge_flags() -> Result<()> {
+    let memory = Memory::load_program_binary("listings_asm/listing_0047_challenge_flags")?;
+    let mut memory_access = MemoryAccess::new();
+    let mut cpu = Cpu::new();
+
+    loop {
+        let (instruction, new_memory_access) = {
+            Decoder::new(&memory)
+                .decode_machine_code(memory_access)
+                .with_context(|| "failed decoding current instruction")?
+        };
+
+        // Update memory_access, so on next loop we get next instruction.
+        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
+    }
+
+    assert_eq!(cpu.registers[RegisterName::A as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::B as usize], 0x9ca5);
+    assert_eq!(cpu.registers[RegisterName::C as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::D as usize], 0x000a);
+    assert_eq!(cpu.registers[RegisterName::SP as usize], 0x0063);
+    assert_eq!(cpu.registers[RegisterName::BP as usize], 0x0062);
+    assert_eq!(cpu.registers[RegisterName::SI as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::DI as usize], 0x0);
+
+    let expected_flags = (CpuFlags::CF | CpuFlags::PF | CpuFlags::AF | CpuFlags::SF).bits();
+    assert_eq!(expected_flags, cpu.flags);
+
+    Ok(())
+}
+
+// Cpu testing instruction pointer
+#[test]
+fn cpu_testing_instruction_pointer() -> Result<()> {
+    let memory = Memory::load_program_binary("listings_asm/listing_0048_ip_register")?;
+    let mut memory_access = MemoryAccess::new();
+    let mut cpu = Cpu::new();
+
+    loop {
+        let (instruction, new_memory_access) = {
+            Decoder::new(&memory)
+                .decode_machine_code(memory_access)
+                .with_context(|| "failed decoding current instruction")?
+        };
+
+        // Update memory_access, so on next loop we get next instruction.
+        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
+    }
+
+    assert_eq!(cpu.registers[RegisterName::A as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::B as usize], 0x07d0);
+    assert_eq!(cpu.registers[RegisterName::C as usize], 0xfce0);
+    assert_eq!(cpu.registers[RegisterName::D as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::SP as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::BP as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::SI as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::DI as usize], 0x0);
+
+    let expected_flags = (CpuFlags::CF | CpuFlags::SF).bits();
+    assert_eq!(expected_flags, cpu.flags);
+
+    assert_eq!(cpu.instruction_pointer, 14);
+
+    Ok(())
+}

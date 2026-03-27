@@ -15,17 +15,19 @@ pub struct Cpu {
     /// General purpose registers
     pub registers: [u16; 8],
     /// Instruction pointer register
-    // instruction_pointer: usize,
+    pub instruction_pointer: usize,
     /// Extra Segment (ES), Code Segment (CS), Stack Segment (SS), Data Segment (DS)
     pub segment_registers: [u16; 4],
     pub flags: u16,
 }
 
+// TODO: To make CPU flow look realistic, maybe create a memory access method that returns the initial
+// memory access that starts at instruction pointer 0, etc
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
             registers: [0; 8],
-            // instruction_pointer: 0,
+            instruction_pointer: 0,
             segment_registers: [0; 4],
             flags: 0,
         }
@@ -36,14 +38,17 @@ impl Cpu {
         instruction: DecodedInstruction,
         memory_access: MemoryAccess,
     ) -> Result<MemoryAccess> {
+        // Update internal instruction pointer to the value where decoded left it after
+        // decoding the instruction.
+        self.instruction_pointer = memory_access.instruction_pointer;
         let destination_value = self.get_operand_value(instruction.operands.destination)?;
         let source_value = self.get_operand_value(instruction.operands.source)?;
 
         let final_value: u16 = match instruction.operation {
             OperationType::None => 0,
             OperationType::Mov => source_value,
-            OperationType::Add => destination_value + source_value,
-            OperationType::Cmp | OperationType::Sub => destination_value - source_value,
+            OperationType::Add => destination_value.wrapping_add(source_value), // Rust overflows panics in debug mode.
+            OperationType::Cmp | OperationType::Sub => destination_value.wrapping_sub(source_value),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -123,12 +128,79 @@ impl Cpu {
             Operand::SegmentRegister(segment_register) => {
                 self.segment_registers[segment_register.to_index()] = final_value;
             }
-            Operand::InstructionPointerIncrement(_) => {
-                return Err(anyhow!("instruction pointer not supported yet"));
+            Operand::InstructionPointerIncrement(increment) => {
+                match instruction.operation {
+                    OperationType::Jnz => {
+                        if !self.is_flag_set(CpuFlags::ZF) {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::Je => {
+                        if self.is_flag_set(CpuFlags::ZF) {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::Jp => {
+                        if self.is_flag_set(CpuFlags::PF) {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::Jb => {
+                        if self.is_flag_set(CpuFlags::CF) {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::LoopNz => {
+                        // Decremtn CX register
+                        self.registers[RegisterName::C as usize] =
+                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                        if self.registers[RegisterName::C as usize] != 0
+                            && !self.is_flag_set(CpuFlags::ZF)
+                        {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::LoopZ => {
+                        // Decremtn CX register
+                        self.registers[RegisterName::C as usize] =
+                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                        if self.registers[RegisterName::C as usize] != 0
+                            && self.is_flag_set(CpuFlags::ZF)
+                        {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    OperationType::Loop => {
+                        // Decremtn CX register
+                        self.registers[RegisterName::C as usize] =
+                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                        if self.registers[RegisterName::C as usize] != 0 {
+                            self.instruction_pointer = self
+                                .instruction_pointer
+                                .wrapping_add_signed(increment as isize);
+                        }
+                    }
+                    _ => (), // The rest of operations dont have instruction pointer increment.
+                }
             }
         }
 
-        Ok(memory_access)
+        Ok(MemoryAccess {
+            instruction_pointer: self.instruction_pointer,
+            code_segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
+        })
     }
 
     fn get_operand_value(&self, operand: Operand) -> Result<u16> {
@@ -455,6 +527,13 @@ impl Display for Cpu {
             self.segment_registers[SegmentRegisterName::DS.to_index()],
             self.segment_registers[SegmentRegisterName::DS.to_index()]
         )?;
+
+        write!(
+            f,
+            "Instruction Pointer: {:04x} ({})\n\n",
+            self.instruction_pointer, self.instruction_pointer
+        )?;
+
         write!(f, "Flags:\n")?;
         if self.is_flag_set(CpuFlags::CF) {
             write!(f, "\t - CF\n")?;

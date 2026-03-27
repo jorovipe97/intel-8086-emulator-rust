@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0046_add_sub_cmp"
+file := "listings_asm/listing_0048_ip_register"
 
 run:
     @echo "Assembling original file..."
