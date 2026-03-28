@@ -17,11 +17,25 @@ fn main() -> Result<()> {
         return Err(anyhow!("binary file is required"));
     }
 
-    let path = &args[1];
+    let path = args
+        .get(1)
+        .ok_or_else(|| anyhow!("program binary file is required"))?;
+
+    let simulate_flag = args.get(2);
+    let should_simulate = match simulate_flag {
+        Some(sim_flag_value) => {
+            if sim_flag_value == "--simulate" {
+                true
+            } else {
+                false
+            }
+        }
+        None => false,
+    };
+
     let memory = Memory::load_program_binary(path)?;
     let mut memory_access = MemoryAccess::new();
     let mut disassembler = Disassembler::new();
-    let mut cpu = Cpu::new();
 
     disassembler.add_bits_16_header();
     loop {
@@ -35,8 +49,7 @@ fn main() -> Result<()> {
         };
         disassembler.add_instruction(&instruction);
 
-        // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+        memory_access = new_memory_access;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 >= memory.program_size() {
@@ -45,6 +58,31 @@ fn main() -> Result<()> {
     }
 
     disassembler.save_to_file("./result.asm")?;
+
+    if !should_simulate {
+        return Ok(());
+    }
+
+    let mut cpu = Cpu::new();
+    memory_access = MemoryAccess::new(); // Start from the beggining.
+    loop {
+        let (instruction, new_memory_access) = {
+            // We borrow Memory instance to the Decoder instance...
+            // The decoder instance just lives during this scope, and then
+            // is droped, releasing the borrowed memory so it can be mutable borrowed after.
+            Decoder::new(&memory)
+                .decode_machine_code(memory_access)
+                .with_context(|| "failed decoding current instruction")?
+        };
+
+        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
+    }
+
     println!("{}", cpu.to_string());
 
     Ok(())

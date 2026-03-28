@@ -38,22 +38,48 @@ pub enum OperationType {
     Add,
     Sub,
     Cmp,
+
+    /// Jump if Not Zero (Not Equal).
     Jnz,
+    /// Jump if Zero (Equal).
     Je,
+    /// Jump if Less (<).
+    /// Jump if Not Greater or Equal (not >=).
     Jl,
+    /// Jump if Less or Equal (<=).
+    /// Jump if Not Greater (not >).
     Jle,
+    /// Jump if below 0
     Jb,
+    /// Jump if below 0 or equal to 0
     Jbe,
+    /// Jump if Parity Even.
     Jp,
+    /// Jump if Overflow.
     Jo,
+    /// Jump if Sign.
     Js,
+    /// Jump if Not Equal (<>).
+    /// Jump if Not Zero.
     Jne,
+    /// Jump if Greater or Equal (>=).
+    /// Jump if Not Less (not <).
     Jnl,
+    /// Jump if Greater (>).
+    /// Jump if Not Less or Equal (not <=).
     Jnle,
+    /// Jump if Above or Equal (>=).
+    // Jump if Not Below (not <).
+    // Jump if Not Carry.
     Jnb,
+    /// Jump if Above (>).
+    /// Jump if Not Below or Equal (not <=).
     Jnbe,
+    /// Jump if Parity Odd (No Parity).
     Jnp,
+    /// Jump if Not Overflow.
     Jno,
+    /// Jump if Not Sign.
     Jns,
     /// Loop CX times.
     Loop,

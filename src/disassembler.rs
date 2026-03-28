@@ -44,6 +44,10 @@ impl Disassembler {
         // If destination or source is not register or a instruction pointer increment do not add size of destination.
         if !matches!(instruction.operands.destination, Operand::Register(_))
             && !matches!(instruction.operands.source, Operand::Register(_))
+            && !matches!(
+                instruction.operands.destination,
+                Operand::InstructionPointerIncrement(_)
+            )
         {
             // Add word, byte depending on if the instruction is wide or not.
             if instruction.is_w_field_set {

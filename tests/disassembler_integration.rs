@@ -205,30 +205,30 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
         cmp ax, 1000
         cmp al, -30
         cmp al, 9
-        jnz byte $+2+2
-        jnz byte $+2+-4
-        jnz byte $+2+-6
-        jnz byte $+2+-4
-        je byte $+2+-2
-        jl byte $+2+-4
-        jle byte $+2+-6
-        jb byte $+2+-8
-        jbe byte $+2+-10
-        jp byte $+2+-12
-        jo byte $+2+-14
-        js byte $+2+-16
-        jnz byte $+2+-18
-        jnl byte $+2+-20
-        jnle byte $+2+-22
-        jnb byte $+2+-24
-        jnbe byte $+2+-26
-        jnp byte $+2+-28
-        jno byte $+2+-30
-        jns byte $+2+-32
-        loop byte $+2+-34
-        loopz byte $+2+-36
-        loopnz byte $+2+-38
-        jcxz byte $+2+-40\n"
+        jnz $+2+2
+        jnz $+2+-4
+        jnz $+2+-6
+        jnz $+2+-4
+        je $+2+-2
+        jl $+2+-4
+        jle $+2+-6
+        jb $+2+-8
+        jbe $+2+-10
+        jp $+2+-12
+        jo $+2+-14
+        js $+2+-16
+        jnz $+2+-18
+        jnl $+2+-20
+        jnle $+2+-22
+        jnb $+2+-24
+        jnbe $+2+-26
+        jnp $+2+-28
+        jno $+2+-30
+        jns $+2+-32
+        loop $+2+-34
+        loopz $+2+-36
+        loopnz $+2+-38
+        jcxz $+2+-40\n"
     );
     assert_eq!(result, expected);
 

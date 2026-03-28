@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0048_ip_register"
+file := "listings_asm/listing_0050_challenge_jumps"
 
 run:
     @echo "Assembling original file..."
@@ -6,7 +6,7 @@ run:
     @echo "Assembling succesfull!"
 
     @echo "Running 8086 disassembler..."
-    cargo run -- {{file}}
+    cargo run -- {{file}} --simulate
     @echo "Program finished correctly!"
 
     @echo "Assembling disassembled file..."

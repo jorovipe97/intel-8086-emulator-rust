@@ -129,71 +129,7 @@ impl Cpu {
                 self.segment_registers[segment_register.to_index()] = final_value;
             }
             Operand::InstructionPointerIncrement(increment) => {
-                match instruction.operation {
-                    OperationType::Jnz => {
-                        if !self.is_flag_set(CpuFlags::ZF) {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::Je => {
-                        if self.is_flag_set(CpuFlags::ZF) {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::Jp => {
-                        if self.is_flag_set(CpuFlags::PF) {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::Jb => {
-                        if self.is_flag_set(CpuFlags::CF) {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::LoopNz => {
-                        // Decremtn CX register
-                        self.registers[RegisterName::C as usize] =
-                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
-                        if self.registers[RegisterName::C as usize] != 0
-                            && !self.is_flag_set(CpuFlags::ZF)
-                        {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::LoopZ => {
-                        // Decremtn CX register
-                        self.registers[RegisterName::C as usize] =
-                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
-                        if self.registers[RegisterName::C as usize] != 0
-                            && self.is_flag_set(CpuFlags::ZF)
-                        {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    OperationType::Loop => {
-                        // Decremtn CX register
-                        self.registers[RegisterName::C as usize] =
-                            self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
-                        if self.registers[RegisterName::C as usize] != 0 {
-                            self.instruction_pointer = self
-                                .instruction_pointer
-                                .wrapping_add_signed(increment as isize);
-                        }
-                    }
-                    _ => (), // The rest of operations dont have instruction pointer increment.
-                }
+                self.compute_instruction_pointer(&instruction, increment);
             }
         }
 
@@ -233,6 +169,184 @@ impl Cpu {
             Operand::InstructionPointerIncrement(ip_inc) => Ok(ip_inc as u16),
             // TODO: How are we going to do an immutable borrow to the memory?
             Operand::Memory(_) => Err(anyhow!("simulator still not supports memory operands")),
+        }
+    }
+
+    fn compute_instruction_pointer(&mut self, instruction: &DecodedInstruction, increment: i32) {
+        let should_jump: bool = match instruction.operation {
+            OperationType::Jnz => {
+                if !self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Je => {
+                if self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jp => {
+                if self.is_flag_set(CpuFlags::PF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jb => {
+                if self.is_flag_set(CpuFlags::CF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jbe => {
+                if self.is_flag_set(CpuFlags::CF) || self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jcxz => {
+                if self.registers[RegisterName::C as usize] == 0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jl => {
+                if self.is_flag_set(CpuFlags::SF) != self.is_flag_set(CpuFlags::OF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jle => {
+                if self.is_flag_set(CpuFlags::ZF)
+                    || (self.is_flag_set(CpuFlags::SF) != self.is_flag_set(CpuFlags::OF))
+                {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jnb => {
+                if self.is_flag_set(CpuFlags::CF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jnbe => {
+                if self.is_flag_set(CpuFlags::CF) || self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jne => {
+                if self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jnl => {
+                if self.is_flag_set(CpuFlags::SF) == self.is_flag_set(CpuFlags::OF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jnle => {
+                if !self.is_flag_set(CpuFlags::ZF)
+                    && self.is_flag_set(CpuFlags::SF) == self.is_flag_set(CpuFlags::OF)
+                {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jno => {
+                if !self.is_flag_set(CpuFlags::OF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jnp => {
+                if !self.is_flag_set(CpuFlags::PF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jns => {
+                if !self.is_flag_set(CpuFlags::SF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Jo => {
+                if self.is_flag_set(CpuFlags::OF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Js => {
+                if self.is_flag_set(CpuFlags::SF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::LoopNz => {
+                // Decremtn CX register
+                self.registers[RegisterName::C as usize] =
+                    self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                if self.registers[RegisterName::C as usize] != 0 && !self.is_flag_set(CpuFlags::ZF)
+                {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::LoopZ => {
+                // Decremtn CX register
+                self.registers[RegisterName::C as usize] =
+                    self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                if self.registers[RegisterName::C as usize] != 0 && self.is_flag_set(CpuFlags::ZF) {
+                    true
+                } else {
+                    false
+                }
+            }
+            OperationType::Loop => {
+                // Decremtn CX register
+                self.registers[RegisterName::C as usize] =
+                    self.registers[RegisterName::C as usize].wrapping_sub_signed(1);
+                if self.registers[RegisterName::C as usize] != 0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            // No jump instructions.
+            OperationType::Cmp
+            | OperationType::Sub
+            | OperationType::Add
+            | OperationType::None
+            | OperationType::Mov => false,
+        };
+
+        if should_jump {
+            self.instruction_pointer = self
+                .instruction_pointer
+                .wrapping_add_signed(increment as isize);
         }
     }
 
