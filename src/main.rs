@@ -78,7 +78,7 @@ fn main() -> Result<()> {
         memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }

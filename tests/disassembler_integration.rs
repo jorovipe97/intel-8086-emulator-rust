@@ -27,7 +27,7 @@ fn disassemble_register_to_register() -> Result<()> {
         memory_access = new_memory_access;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -75,7 +75,7 @@ fn disassemble_mov_modes() -> Result<()> {
         memory_access = new_memory_access;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -123,7 +123,7 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
         memory_access = new_memory_access;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -253,7 +253,7 @@ fn cpu_testing_add_sub_cmp() -> Result<()> {
         memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -291,7 +291,7 @@ fn cpu_testing_challenge_flags() -> Result<()> {
         memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -329,7 +329,7 @@ fn cpu_testing_instruction_pointer() -> Result<()> {
         memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
@@ -369,7 +369,7 @@ fn cpu_testing_jumps() -> Result<()> {
         memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
 
         // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }
