@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0050_challenge_jumps"
+file := "listings_asm/test"
 
 run:
     @echo "Assembling original file..."

@@ -377,7 +377,7 @@ impl Cpu {
             if (final_value & (1 << 7)) != 0 {
                 self.set_flag(CpuFlags::SF);
             } else {
-                self.set_flag(CpuFlags::SF);
+                self.clear_flag(CpuFlags::SF);
             }
         }
     }

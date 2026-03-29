@@ -350,3 +350,43 @@ fn cpu_testing_instruction_pointer() -> Result<()> {
 
     Ok(())
 }
+
+// Cpu testing instruction pointer
+#[test]
+fn cpu_testing_jumps() -> Result<()> {
+    let memory = Memory::load_program_binary("listings_asm/listing_0050_challenge_jumps")?;
+    let mut memory_access = MemoryAccess::new();
+    let mut cpu = Cpu::new();
+
+    loop {
+        let (instruction, new_memory_access) = {
+            Decoder::new(&memory)
+                .decode_machine_code(memory_access)
+                .with_context(|| "failed decoding current instruction")?
+        };
+
+        // Update memory_access, so on next loop we get next instruction.
+        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+
+        // If we reached the end of the program, exit.
+        if memory_access.absolute_address() + 1 >= memory.program_size() {
+            break;
+        }
+    }
+
+    assert_eq!(cpu.registers[RegisterName::A as usize], 0x000d);
+    assert_eq!(cpu.registers[RegisterName::B as usize], 0xfffb);
+    assert_eq!(cpu.registers[RegisterName::C as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::D as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::SP as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::BP as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::SI as usize], 0x0);
+    assert_eq!(cpu.registers[RegisterName::DI as usize], 0x0);
+
+    let expected_flags = (CpuFlags::CF | CpuFlags::AF | CpuFlags::SF).bits();
+    assert_eq!(expected_flags, cpu.flags);
+
+    assert_eq!(cpu.instruction_pointer, 28);
+
+    Ok(())
+}
