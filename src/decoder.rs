@@ -196,9 +196,15 @@ impl<'a> Decoder<'a> {
 
         if has_mod {
             if mod_field == 0b11 {
+                let has_mod_rm_w = has[InstructionBitsUsage::ModRmW as usize];
+                let mod_register_w = if has_mod_rm_w {
+                    bits_parts[InstructionBitsUsage::ModRmW as usize]
+                } else {
+                    w
+                };
                 // If MOD==0b11 (register-to-register mode), then
                 // R/M identifies the second register operand.
-                mod_operand = self.get_reg_operand(rm, w)?
+                mod_operand = self.get_reg_operand(rm, mod_register_w)?
             } else {
                 let displacement = bits_parts[InstructionBitsUsage::Disp as usize];
                 mod_operand = self.get_memory_operand(mod_field, rm, displacement)?;

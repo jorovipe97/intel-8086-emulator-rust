@@ -52,6 +52,7 @@ impl Cpu {
             OperationType::Push => source_value,
             OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
             OperationType::Xchg => 0,                // TODO: Implement the operation.
+            OperationType::In => 0,                  // TOOD: Implement IO device transfers
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -346,7 +347,8 @@ impl Cpu {
             | OperationType::Mov
             | OperationType::Push
             | OperationType::Pop
-            | OperationType::Xchg => false,
+            | OperationType::Xchg
+            | OperationType::In => false,
         };
 
         if should_jump {

@@ -52,6 +52,13 @@ pub enum OperationType {
     /// Exchange values of two operands.
     Xchg,
 
+    /// There are two different forms of IN and OUT instructions: the direct I/O instructions and
+    /// variable I/O instructions. Either of these two types of instructions can be used to transfer a byte
+    /// or a word of data. All data transfers take place between an I/O device and the MPU’s accumulator register.
+    ///
+    /// Second operand is a port number. If required to access port number over 255 - DX register should be used.
+    In,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -119,6 +126,7 @@ impl Display for OperationType {
             Self::Push => write!(f, "push"),
             Self::Pop => write!(f, "pop"),
             Self::Xchg => write!(f, "xchg"),
+            Self::In => write!(f, "in"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
@@ -155,6 +163,13 @@ pub enum InstructionBitsUsage {
     /// If S = 1; Sign extend 8-bit immediate data to 16 bits.
     S,
     W,
+
+    /// Used as an implicit field in the instruction table to force a register
+    /// w(idth) when using mod+rm fields. This is useful for the case when this register
+    /// must not be the same width of the reg field.
+    /// For example, without this, the `in al, dx` instruction would be decoded
+    /// as `in al, dl` which is an invalid operation because second operand should always be dx for IN instruction.
+    ModRmW,
     Mod,
     Reg,
     Rm,

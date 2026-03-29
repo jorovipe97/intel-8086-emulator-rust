@@ -102,6 +102,19 @@ const fn implicit_w(value: u8) -> InstructionBits {
     }
 }
 
+/// When an instruction has two registers operands, this explicitly set
+/// the width (w) of the register calculated using mod+rm fields.
+///
+/// This is useful when you want to force the mod+rm register to have a different
+/// width than the register calculated using the reg + w field.
+const fn implicit_mod_rm_w(value: u8) -> InstructionBits {
+    InstructionBits {
+        usage: InstructionBitsUsage::ModRmW,
+        bit_count: 0,
+        value,
+    }
+}
+
 /// Allows to declare an implicit reg, so decoder will always decode to the given reg
 const fn implicit_reg(value: u8) -> InstructionBits {
     InstructionBits {
@@ -614,6 +627,48 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_w(1),
             implicit_mod(0b11), // Register
             implicit_rm(0b000), // Always AX
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::In,
+        bits: &[
+            InstructionBits {
+                // Fixed port
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1110010,
+            },
+            W,
+            // Destination is always the accumulator
+            implicit_d(1),
+            // AX if w=1, or AL if w=0
+            implicit_reg(0b000),
+            DATA,
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::In,
+        bits: &[
+            InstructionBits {
+                // Variable port
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1110110,
+            },
+            W,
+            // Destination is always the accumulator
+            implicit_d(1),
+            // AX if w=1, or AL if w=0
+            implicit_reg(0b000),
+            // Forces the register calculated using mod+rm always have
+            // a (w)idth of 1 (16 bits) no matter the value of the W flag.
+            implicit_mod_rm_w(1),
+            // Source operand is a register
+            implicit_mod(0b11),
+            // Always DX register
+            implicit_rm(0b010),
         ],
         affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
