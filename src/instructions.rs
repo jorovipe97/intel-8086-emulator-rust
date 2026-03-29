@@ -673,6 +673,48 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(), // No flags affected,
     },
     InstructionEncoding {
+        op: OperationType::Out,
+        bits: &[
+            InstructionBits {
+                // Fixed port
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1110011,
+            },
+            W,
+            // Source is always the accumulator
+            implicit_d(0),
+            // AX if w=1, or AL if w=0
+            implicit_reg(0b000),
+            DATA,
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::Out,
+        bits: &[
+            InstructionBits {
+                // Variable port
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1110111,
+            },
+            W,
+            // Source is always the accumulator
+            implicit_d(0),
+            // AX if w=1, or AL if w=0
+            implicit_reg(0b000),
+            // Forces the register calculated using mod+rm always have
+            // a (w)idth of 1 (16 bits) no matter the value of the W flag.
+            implicit_mod_rm_w(1),
+            // Source operand is a register
+            implicit_mod(0b11),
+            // Always DX register
+            implicit_rm(0b010),
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

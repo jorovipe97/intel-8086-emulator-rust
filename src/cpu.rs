@@ -53,6 +53,7 @@ impl Cpu {
             OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
             OperationType::Xchg => 0,                // TODO: Implement the operation.
             OperationType::In => 0,                  // TOOD: Implement IO device transfers
+            OperationType::Out => 0,                 // TOOD: Implement IO device transfers
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -96,6 +97,8 @@ impl Cpu {
         match instruction.operands.destination {
             Operand::None => (),
             Operand::Immediate(_) => {
+                // TODO: How to handle instructions that support immediate in the destination
+                // eg: the OUT, the number represents an I/O device port
                 return Err(anyhow!(
                     "you cannot have an immediate as destination operand"
                 ));
@@ -348,7 +351,8 @@ impl Cpu {
             | OperationType::Push
             | OperationType::Pop
             | OperationType::Xchg
-            | OperationType::In => false,
+            | OperationType::In
+            | OperationType::Out => false,
         };
 
         if should_jump {

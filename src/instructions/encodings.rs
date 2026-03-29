@@ -52,12 +52,27 @@ pub enum OperationType {
     /// Exchange values of two operands.
     Xchg,
 
+    /// Transfers from I/O device to accumulator (AX or AL).
+    ///
     /// There are two different forms of IN and OUT instructions: the direct I/O instructions and
     /// variable I/O instructions. Either of these two types of instructions can be used to transfer a byte
     /// or a word of data. All data transfers take place between an I/O device and the MPU’s accumulator register.
     ///
     /// Second operand is a port number. If required to access port number over 255 - DX register should be used.
+    ///
+    /// The port number identifies the external I/O device.
     In,
+
+    /// Transfers from accumulator (AX or AL) to I/O device.
+    ///
+    /// There are two different forms of IN and OUT instructions: the direct I/O instructions and
+    /// variable I/O instructions. Either of these two types of instructions can be used to transfer a byte
+    /// or a word of data. All data transfers take place between an I/O device and the MPU’s accumulator register.
+    ///
+    /// Second operand is a port number. If required to access port number over 255 - DX register should be used.
+    ///
+    /// The port number identifies the external I/O device.
+    Out,
 
     /// Jump if Not Zero (Not Equal).
     Jnz,
@@ -127,6 +142,7 @@ impl Display for OperationType {
             Self::Pop => write!(f, "pop"),
             Self::Xchg => write!(f, "xchg"),
             Self::In => write!(f, "in"),
+            Self::Out => write!(f, "out"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
