@@ -1,5 +1,5 @@
-use crate::instructions::decoded_instruction::DecodedInstruction;
 use crate::instructions::operands::Operand;
+use crate::instructions::{decoded_instruction::DecodedInstruction, encodings::OperationType};
 use anyhow::{Context, Result};
 use std::{self, fs};
 
@@ -48,9 +48,19 @@ impl Disassembler {
                 instruction.operands.destination,
                 Operand::InstructionPointerIncrement(_)
             )
+            && !matches!(instruction.operands.source, Operand::SegmentRegister(_))
+            && !matches!(
+                instruction.operands.destination,
+                Operand::SegmentRegister(_)
+            )
         {
-            // Add word, byte depending on if the instruction is wide or not.
-            if instruction.is_w_field_set {
+            // Push instruction only support 16 bits (word) operands
+            if instruction.operation == OperationType::Push
+                || instruction.operation == OperationType::Pop
+            {
+                self.string_builder.push_str("word ");
+            } else if instruction.is_w_field_set {
+                // Add word, byte depending on if the instruction is wide or not.
                 self.string_builder.push_str("word ");
             } else {
                 self.string_builder.push_str("byte ");

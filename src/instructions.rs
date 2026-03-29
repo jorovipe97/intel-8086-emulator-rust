@@ -465,6 +465,114 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
+        op: OperationType::Push,
+        bits: &[
+            // Register/Memory
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1111_1111,
+            },
+            MOD,
+            implicit_d(1), // Set to 1, so that source operand is computed from the mod field.
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b110,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Push,
+        bits: &[
+            // Register
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 5,
+                value: 0b01010,
+            },
+            REG,
+            implicit_w(1), // Always use 16-bits register, as push don't support 8 bit operand.
+            implicit_d(0), // Set to 0, so that source operand is computed from the reg field.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Push,
+        bits: &[
+            // Segment register
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            SR,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b110,
+            },
+            implicit_d(0), // Set to 0, so that source operand is computed from the segment reg field.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Pop,
+        bits: &[
+            // Register/Memory
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1000_1111,
+            },
+            MOD,
+            implicit_d(0), // Set to 0, so that destination operand is computed from the mod field.
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Pop,
+        bits: &[
+            // Register
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 5,
+                value: 0b01011,
+            },
+            REG,
+            implicit_w(1), // Always use 16-bits register, as pop don't support 8 bit operand.
+            implicit_d(1), // Set to 1, so that destination operand is computed from the reg field.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Pop,
+        bits: &[
+            // Segment register
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            SR,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b111,
+            },
+            implicit_d(1), // Set to 1, so that destination operand is computed from the segment reg field.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

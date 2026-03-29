@@ -49,6 +49,8 @@ impl Cpu {
             OperationType::Mov => source_value,
             OperationType::Add => destination_value.wrapping_add(source_value), // Rust overflows panics in debug mode.
             OperationType::Cmp | OperationType::Sub => destination_value.wrapping_sub(source_value),
+            OperationType::Push => source_value,
+            OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -340,7 +342,9 @@ impl Cpu {
             | OperationType::Sub
             | OperationType::Add
             | OperationType::None
-            | OperationType::Mov => false,
+            | OperationType::Mov
+            | OperationType::Push
+            | OperationType::Pop => false,
         };
 
         if should_jump {

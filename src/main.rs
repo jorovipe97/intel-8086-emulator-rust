@@ -51,8 +51,8 @@ fn main() -> Result<()> {
 
         memory_access = new_memory_access;
 
-        // If we reached the end of the program, exit.
-        if memory_access.absolute_address() + 1 >= memory.program_size() {
+        // If next address don't have program bytes, break
+        if memory_access.absolute_address() + 1 > memory.program_size() {
             break;
         }
     }

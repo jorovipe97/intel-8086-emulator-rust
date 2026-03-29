@@ -6,7 +6,7 @@ run:
     @echo "Assembling succesfull!"
 
     @echo "Running 8086 disassembler..."
-    cargo run -- {{file}} --simulate
+    cargo run -- {{file}}
     @echo "Program finished correctly!"
 
     @echo "Assembling disassembled file..."

@@ -39,6 +39,16 @@ pub enum OperationType {
     Sub,
     Cmp,
 
+    /// In 8086 stack Push and Pop only supports 16 bits
+    /// Subtract 2 from SP register. (Stack grows downward in the memory)
+    /// Write the value of source to the address SS:SP.
+    Push,
+
+    /// In 8086 stack Push and Pop only supports 16 bits
+    /// Write the value at the address SS:SP to destination.
+    /// Add 2 to SP register.
+    Pop,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -103,6 +113,8 @@ impl Display for OperationType {
             Self::Add => write!(f, "add"),
             Self::Sub => write!(f, "sub"),
             Self::Cmp => write!(f, "cmp"),
+            Self::Push => write!(f, "push"),
+            Self::Pop => write!(f, "pop"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
