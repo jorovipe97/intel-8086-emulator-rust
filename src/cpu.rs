@@ -51,6 +51,7 @@ impl Cpu {
             OperationType::Cmp | OperationType::Sub => destination_value.wrapping_sub(source_value),
             OperationType::Push => source_value,
             OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
+            OperationType::Xchg => 0,                // TODO: Implement the operation.
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -344,7 +345,8 @@ impl Cpu {
             | OperationType::None
             | OperationType::Mov
             | OperationType::Push
-            | OperationType::Pop => false,
+            | OperationType::Pop
+            | OperationType::Xchg => false,
         };
 
         if should_jump {

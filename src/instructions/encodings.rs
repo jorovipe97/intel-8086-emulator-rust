@@ -49,6 +49,9 @@ pub enum OperationType {
     /// Add 2 to SP register.
     Pop,
 
+    /// Exchange values of two operands.
+    Xchg,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -115,6 +118,7 @@ impl Display for OperationType {
             Self::Cmp => write!(f, "cmp"),
             Self::Push => write!(f, "push"),
             Self::Pop => write!(f, "pop"),
+            Self::Xchg => write!(f, "xchg"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),

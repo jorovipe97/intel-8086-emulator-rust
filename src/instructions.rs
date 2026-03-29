@@ -573,6 +573,51 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
+        op: OperationType::Xchg,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1000011,
+            },
+            // This just to always calculate destination from reg field and source from mod field,
+            // note that semantically both operands are considered source and destinations as we are doing a swap.
+            // xchg ax, [mem]
+            // is exactly the same as
+            // xchg [mem], ax
+            implicit_d(1),
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
+        op: OperationType::Xchg,
+        bits: &[
+            InstructionBits {
+                // Register with accumulator
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 5,
+                value: 0b10010,
+            },
+            REG,
+            // This just to always calculate destination from reg field and source from mod field,
+            // note that semantically both operands are considered source and destinations as we are doing a swap.
+            // xchg ax, [mem]
+            // is exactly the same as
+            // xchg [mem], ax
+            implicit_d(1),
+            // This mode always operates on 16 bit register
+            implicit_w(1),
+            implicit_mod(0b11), // Register
+            implicit_rm(0b000), // Always AX
+        ],
+        affected_cpu_flags: CpuFlags::empty(), // No flags affected,
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {
