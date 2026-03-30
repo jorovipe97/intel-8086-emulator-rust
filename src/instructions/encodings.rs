@@ -74,6 +74,30 @@ pub enum OperationType {
     /// The port number identifies the external I/O device.
     Out,
 
+    /// Translates to something like `mov al,[ds:bx + al]`, Note that the al in the
+    /// address calculation is invalid, However Xlat can use it.
+    //
+    /// Copy value of memory byte at DS:[BX + unsigned AL] to AL register.
+    ///
+    /// In common applications you will hardly find any usage for xlat instruction.
+    /// It's archaism from 8086 times, compiler will certainly not use it, and most
+    /// of hand written assembly neither, as usually you can use simple mov al,[bx+si]
+    /// or something similar.
+    ///
+    /// See: https://stackoverflow.com/a/47560869/4086981
+    Xlat,
+
+    /// Computes the effective address of the second operand (the source operand) and
+    /// stores it in the first operand (destination operand). The source operand is a
+    /// memory address (offset part) specified with one of the processors addressing modes;
+    /// the destination operand is a general-purpose register. The address-size and operand-size
+    /// attributes affect the action performed by this instruction, as shown in the following table.
+    /// The operand-size attribute of the instruction is determined by the chosen register;
+    /// the address-size attribute is determined by the attribute of the code segment.
+    ///
+    /// Seconds operand must be a memory address speciified with an addressing mode: eg [rbx+2*rs1].
+    Lea,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -143,6 +167,8 @@ impl Display for OperationType {
             Self::Xchg => write!(f, "xchg"),
             Self::In => write!(f, "in"),
             Self::Out => write!(f, "out"),
+            Self::Xlat => write!(f, "xlat"),
+            Self::Lea => write!(f, "lea"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
