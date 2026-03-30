@@ -58,6 +58,10 @@ impl Cpu {
             OperationType::Lea => 0,                 // TOOD: Implement IO device transfers
             OperationType::Lds => 0,                 // TOOD: Implement IO device transfers
             OperationType::Les => 0,                 // TOOD: Implement IO device transfers
+            OperationType::Lahf => 0,                // TOOD: Implement IO device transfers
+            OperationType::Sahf => 0,                // TOOD: Implement IO device transfers
+            OperationType::Pushf => 0,               // TOOD: Implement IO device transfers
+            OperationType::Popf => 0,                // TOOD: Implement IO device transfers
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -360,7 +364,11 @@ impl Cpu {
             | OperationType::Xlat
             | OperationType::Lea
             | OperationType::Lds
-            | OperationType::Les => false,
+            | OperationType::Les
+            | OperationType::Lahf
+            | OperationType::Sahf
+            | OperationType::Pushf
+            | OperationType::Popf => false,
         };
 
         if should_jump {

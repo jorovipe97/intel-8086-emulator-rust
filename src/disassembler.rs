@@ -53,6 +53,10 @@ impl Disassembler {
                 instruction.operands.destination,
                 Operand::SegmentRegister(_)
             )
+            && instruction.operation != OperationType::Lahf
+            && instruction.operation != OperationType::Sahf
+            && instruction.operation != OperationType::Pushf
+            && instruction.operation != OperationType::Popf
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push
