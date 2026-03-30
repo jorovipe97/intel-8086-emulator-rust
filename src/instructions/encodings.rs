@@ -98,6 +98,24 @@ pub enum OperationType {
     /// Seconds operand must be a memory address speciified with an addressing mode: eg [rbx+2*rs1].
     Lea,
 
+    /// Loads a far pointer (segment selector and offset) (segment:offset) from the second operand (source operand)
+    /// into a segment register and the first operand (destination operand). The source operand
+    /// specifies a 48-bit or a 32-bit pointer in memory depending on the current setting of the
+    /// operand-size attribute (32 bits or 16 bits, respectively). The instruction opcode and the
+    /// destination operand specify a segment register/general-purpose register pair.
+    /// The 16-bit segment selector from the source operand is loaded into the segment register
+    /// specified with the opcode (DS, SS, ES, FS, or GS). The 32-bit or 16-bit offset is loaded
+    /// into the register specified with the destination operand.
+    ///
+    /// This is ussed to get the address of some memory data that is outside of the current segment.
+    ///
+    /// See: https://www.felixcloutier.com/x86/lds:les:lfs:lgs:lss
+    Lds,
+
+    /// See: OperationType::Lds docs
+    /// See: https://www.felixcloutier.com/x86/lds:les:lfs:lgs:lss
+    Les,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -169,6 +187,8 @@ impl Display for OperationType {
             Self::Out => write!(f, "out"),
             Self::Xlat => write!(f, "xlat"),
             Self::Lea => write!(f, "lea"),
+            Self::Lds => write!(f, "lds"),
+            Self::Les => write!(f, "les"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),

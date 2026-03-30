@@ -740,6 +740,38 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
+        op: OperationType::Lds,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b11000101,
+            },
+            implicit_d(1), // Register is always the destination.
+            implicit_w(1), // Destination is always 16 bits
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Les,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b11000100,
+            },
+            implicit_d(1), // Register is always the destination.
+            implicit_w(1), // Destination is always 16 bits
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {
