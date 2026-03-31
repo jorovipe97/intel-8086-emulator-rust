@@ -63,8 +63,11 @@ impl Cpu {
             OperationType::Pushf => todo!(),         // TOOD: Implement IO device transfers
             OperationType::Popf => todo!(),          // TOOD: Implement IO device transfers
             OperationType::Adc => todo!(),           // TOOD: Implement IO device transfers
-            OperationType::Aaa => todo!(),           // TOOD: Implement IO device transfers
             OperationType::Inc => destination_value.wrapping_add(1),
+            OperationType::Aaa => todo!(), // TOOD: Implement IO device transfers
+            OperationType::Daa => todo!(),
+            OperationType::Sbb => todo!(),
+            OperationType::Dec => destination_value.wrapping_sub(1),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe

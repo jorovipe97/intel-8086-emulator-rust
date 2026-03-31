@@ -186,6 +186,35 @@ pub enum OperationType {
     /// Just affects AF and CF flags.
     Aaa,
 
+    /// Decimal adjust After Addition.
+    /// Corrects the result of addition of two packed BCD values.
+    ///
+    /// Algorithm:
+    /// if low nibble of AL > 9 or AF = 1 then:
+    /// AL = AL + 6
+    /// AF = 1
+    /// if AL > 9Fh or CF = 1 then:
+    /// AL = AL + 60h
+    /// CF = 1
+    ///
+    /// Example:
+    /// MOV AL, 0Fh  ; AL = 0Fh (15)
+    /// DAA          ; AL = 15h
+    /// RET
+    Daa,
+
+    /// Subtract with Borrow.
+    ///
+    /// Algorithm:
+    /// operand1 = operand1 - operand2 - CF
+    ///
+    /// Example:
+    /// STC
+    /// MOV AL, 5
+    /// SBB AL, 3    ; AL = 5 - 3 - 1 = 1
+    /// RET
+    Sbb,
+
     /// Get flags register from the stack.
     ///
     /// Algorithm:
@@ -195,6 +224,19 @@ pub enum OperationType {
     /// Read item at the top of the stack and then increment stack pointer to remove the
     /// item from the stack. Remember in 8086 an other architectures stack grows downward and shrink upward.
     Popf,
+
+    /// Decrement.
+    ///
+    /// Algorithm:
+    /// operand = operand - 1
+    ///
+    /// Example:
+    /// MOV AL, 255  ; AL = 0FFh (255 or -1)
+    /// DEC AL       ; AL = 0FEh (254 or -2)
+    /// RET
+    ///
+    /// CF flag is unchanged.
+    Dec,
 
     /// Jump if Not Zero (Not Equal).
     Jnz,
@@ -276,6 +318,9 @@ impl Display for OperationType {
             Self::Adc => write!(f, "adc"),
             Self::Inc => write!(f, "inc"),
             Self::Aaa => write!(f, "aaa"),
+            Self::Daa => write!(f, "daa"),
+            Self::Sbb => write!(f, "sbb"),
+            Self::Dec => write!(f, "dec"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
