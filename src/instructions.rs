@@ -356,6 +356,127 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
+        op: OperationType::Adc,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b000100,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Adc,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b100000,
+            },
+            S,
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(0), // Destination is not in reg field. If destination is register it is in rm field.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b010,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Adc,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0001010,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            // implicit_mod(0b11),  // Register mode
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Inc,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111111,
+            },
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            RM,
+        ],
+        // All except the CF.
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits()
+                | CpuFlags::AF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Inc,
+        bits: &[
+            InstructionBits {
+                // Register
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 5,
+                value: 0b01000,
+            },
+            implicit_d(1), // Destination is computed from reg field.
+            implicit_w(1), // Always use entire register.
+            REG,
+        ],
+        // All except the CF.
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits()
+                | CpuFlags::AF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Aaa,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b0011_0111,
+        }],
+        // Just affects CF and AF
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::AF.bits()),
+    },
+    InstructionEncoding {
         op: OperationType::Sub,
         bits: &[
             InstructionBits {

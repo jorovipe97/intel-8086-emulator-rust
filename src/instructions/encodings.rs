@@ -116,6 +116,86 @@ pub enum OperationType {
     /// See: https://www.felixcloutier.com/x86/lds:les:lfs:lgs:lss
     Les,
 
+    /// The LAHF (Load AH from Flags) instruction in 8086 assembly language copies
+    /// the lower 8 bits of the 16-bit flag register into the AH register.
+    ///
+    /// It acts as a data transfer tool to move flag statuses—specifically SF, ZF, AF, PF, and CF into AH
+    /// for testing or saving without affecting the flags themselves.
+    Lahf,
+
+    /// Store AH into the lower 8 bits of the 16-bit flag register.
+    Sahf,
+
+    /// Store flags register in the stack.
+    ///
+    /// Algorithm:
+    /// 1. SP = SP - 2
+    /// 2. SS:[SP] (top of the stack) = flags
+    ///
+    /// Decrement stack pointer by 2 (bytes) and store there the flags register.
+    Pushf,
+
+    /// Add with Carry.
+    ///
+    /// Algorithm:
+    /// operand1 = operand1 + operand2 + CF
+    ///
+    /// Example:
+    /// STC        ; set CF = 1
+    /// MOV AL, 5  ; AL = 5
+    /// ADC AL, 1  ; AL = 7
+    /// RET
+    ///
+    /// See example usage of this instruction: https://stackoverflow.com/q/44540078/4086981
+    Adc,
+
+    /// Increment.
+    ///
+    /// Algorithm:
+    /// operand = operand + 1
+    ///
+    /// Example:
+    /// MOV AL, 4
+    /// INC AL       ; AL = 5
+    /// RET
+    ///
+    /// This insntruction dont affect the CF (Carry Flag),
+    /// check this to see the reasons: https://stackoverflow.com/a/13435633/4086981
+    Inc,
+
+    /// ASCII Adjust after Addition.
+    /// Corrects result in AH and AL after addition when working with unpacked BCD values.
+    /// It works according to the following Algorithm:
+    /// if low nibble of AL > 9 or AF = 1 then:
+    ///     AL = AL + 6
+    ///     AH = AH + 1
+    ///     AF = 1
+    ///     CF = 1
+    /// else
+    ///     AF = 0
+    ///     CF = 0
+    /// in both cases:
+    /// clear the high nibble of AL.
+    ///
+    /// Example:
+    /// MOV AX, 15   ; AH = 00, AL = 0Fh
+    /// AAA          ; AH = 01, AL = 05
+    /// RET
+    /// See: https://stackoverflow.com/q/18945247/4086981
+    ///
+    /// Just affects AF and CF flags.
+    Aaa,
+
+    /// Get flags register from the stack.
+    ///
+    /// Algorithm:
+    /// 1. flags = SS:[SP] (top of the stack)
+    /// 2. SP = SP + 2
+    ///
+    /// Read item at the top of the stack and then increment stack pointer to remove the
+    /// item from the stack. Remember in 8086 an other architectures stack grows downward and shrink upward.
+    Popf,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -189,6 +269,13 @@ impl Display for OperationType {
             Self::Lea => write!(f, "lea"),
             Self::Lds => write!(f, "lds"),
             Self::Les => write!(f, "les"),
+            Self::Lahf => write!(f, "lahf"),
+            Self::Sahf => write!(f, "sahf"),
+            Self::Pushf => write!(f, "pushf"),
+            Self::Popf => write!(f, "popf"),
+            Self::Adc => write!(f, "adc"),
+            Self::Inc => write!(f, "inc"),
+            Self::Aaa => write!(f, "aaa"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),

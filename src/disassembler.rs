@@ -57,6 +57,7 @@ impl Disassembler {
             && instruction.operation != OperationType::Sahf
             && instruction.operation != OperationType::Pushf
             && instruction.operation != OperationType::Popf
+            && instruction.operation != OperationType::Aaa
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

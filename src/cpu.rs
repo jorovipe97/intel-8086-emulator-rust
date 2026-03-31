@@ -51,17 +51,20 @@ impl Cpu {
             OperationType::Cmp | OperationType::Sub => destination_value.wrapping_sub(source_value),
             OperationType::Push => source_value,
             OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
-            OperationType::Xchg => 0,                // TODO: Implement the operation.
-            OperationType::In => 0,                  // TOOD: Implement IO device transfers
-            OperationType::Out => 0,                 // TOOD: Implement IO device transfers
-            OperationType::Xlat => 0,                // TOOD: Implement IO device transfers
-            OperationType::Lea => 0,                 // TOOD: Implement IO device transfers
-            OperationType::Lds => 0,                 // TOOD: Implement IO device transfers
-            OperationType::Les => 0,                 // TOOD: Implement IO device transfers
-            OperationType::Lahf => 0,                // TOOD: Implement IO device transfers
-            OperationType::Sahf => 0,                // TOOD: Implement IO device transfers
-            OperationType::Pushf => 0,               // TOOD: Implement IO device transfers
-            OperationType::Popf => 0,                // TOOD: Implement IO device transfers
+            OperationType::Xchg => todo!(),          // TODO: Implement the operation.
+            OperationType::In => todo!(),            // TOOD: Implement IO device transfers
+            OperationType::Out => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Xlat => todo!(),          // TOOD: Implement IO device transfers
+            OperationType::Lea => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Lds => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Les => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Lahf => todo!(),          // TOOD: Implement IO device transfers
+            OperationType::Sahf => todo!(),          // TOOD: Implement IO device transfers
+            OperationType::Pushf => todo!(),         // TOOD: Implement IO device transfers
+            OperationType::Popf => todo!(),          // TOOD: Implement IO device transfers
+            OperationType::Adc => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Aaa => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Inc => destination_value.wrapping_add(1),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -351,24 +354,28 @@ impl Cpu {
                 }
             }
             // No jump instructions.
-            OperationType::Cmp
-            | OperationType::Sub
-            | OperationType::Add
-            | OperationType::None
-            | OperationType::Mov
-            | OperationType::Push
-            | OperationType::Pop
-            | OperationType::Xchg
-            | OperationType::In
-            | OperationType::Out
-            | OperationType::Xlat
-            | OperationType::Lea
-            | OperationType::Lds
-            | OperationType::Les
-            | OperationType::Lahf
-            | OperationType::Sahf
-            | OperationType::Pushf
-            | OperationType::Popf => false,
+            _ => false,
+            // OperationType::Cmp
+            // | OperationType::Sub
+            // | OperationType::Add
+            // | OperationType::None
+            // | OperationType::Mov
+            // | OperationType::Push
+            // | OperationType::Pop
+            // | OperationType::Xchg
+            // | OperationType::In
+            // | OperationType::Out
+            // | OperationType::Xlat
+            // | OperationType::Lea
+            // | OperationType::Lds
+            // | OperationType::Les
+            // | OperationType::Lahf
+            // | OperationType::Sahf
+            // | OperationType::Pushf
+            // | OperationType::Popf
+            // | OperationType::Adc
+            // | OperationType::Inc
+            // | OperationType::Aaa => false,
         };
 
         if should_jump {
