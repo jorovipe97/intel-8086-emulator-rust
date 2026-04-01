@@ -1408,6 +1408,162 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
     },
     InstructionEncoding {
+        op: OperationType::And,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b001000,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::And,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1000000,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(0), // Destination is computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b100,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::And,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0010010,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Test,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                // 8086 manual says that this is 0b000100 but that was a major typo
+                // in the manual, as that opcode corresponds to the ADC instruction.
+                value: 0b100001,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Test,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(0), // Destination is computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Test,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1010100,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::CF.bits()
+                | CpuFlags::ZF.bits()
+                | CpuFlags::SF.bits()
+                | CpuFlags::OF.bits()
+                | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

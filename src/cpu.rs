@@ -87,6 +87,8 @@ impl Cpu {
             OperationType::Ror => todo!(), // TODO: OF=0 if first operand keeps original sign.
             OperationType::Rcl => todo!(), // TODO: OF=0 if first operand keeps original sign.
             OperationType::Rcr => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::And => destination_value & source_value,
+            OperationType::Test => destination_value & source_value,
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -123,6 +125,9 @@ impl Cpu {
         // operand, just affects flags, this instruction is usually used to control the program
         // execution flow.
         if let OperationType::Cmp = instruction.operation {
+            return Ok(memory_access);
+        }
+        if let OperationType::Test = instruction.operation {
             return Ok(memory_access);
         }
 

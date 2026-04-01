@@ -564,6 +564,40 @@ pub enum OperationType {
     /// RET
     Rcr,
 
+    /// Bitwise AND.
+    ///
+    /// Logical AND between all bits of two operands. Result is stored in operand1.
+    ///
+    /// These rules apply:
+    /// 1 AND 1 = 1
+    /// 1 AND 0 = 0
+    /// 0 AND 1 = 0
+    /// 0 AND 0 = 0
+    ///
+    /// Example:
+    /// MOV AL, 'a'        ; AL = 01100001b
+    /// AND AL, 11011111b  ; AL = 01000001b  ('A')
+    /// RET
+    ///
+    /// Affect CF, ZF, SF, OF, PF
+    And,
+
+    /// Logical AND between all bits of two operands for flags only.
+    /// These flags are effected: ZF, SF, PF. Result is not stored anywhere.
+    ///
+    /// These rules apply:
+    /// 1 AND 1 = 1
+    /// 1 AND 0 = 0
+    /// 0 AND 1 = 0
+    /// 0 AND 0 = 0
+    ///
+    /// Example:
+    /// MOV AL, 00000101b
+    /// TEST AL, 1         ; ZF = 0.
+    /// TEST AL, 10b       ; ZF = 1.
+    /// RET
+    Test,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -666,6 +700,8 @@ impl Display for OperationType {
             Self::Ror => write!(f, "ror"),
             Self::Rcl => write!(f, "rcl"),
             Self::Rcr => write!(f, "rcr"),
+            Self::And => write!(f, "and"),
+            Self::Test => write!(f, "test"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
