@@ -238,6 +238,332 @@ pub enum OperationType {
     /// CF flag is unchanged.
     Dec,
 
+    /// Negate. Makes operand negative (two's complement).
+    ///
+    /// Algorithm:
+    /// Invert all bits of the operand
+    /// Add 1 to inverted operand
+    ///
+    /// Example:
+    /// MOV AL, 5   ; AL = 05h
+    /// NEG AL      ; AL = 0FBh (-5)
+    /// NEG AL      ; AL = 05h (5)
+    /// RET
+    Neg,
+
+    /// ASCII Adjust after Subtraction.
+    /// Corrects result in AH and AL after subtraction when working with BCD values.
+    ///
+    /// Algorithm:
+    /// if low nibble of AL > 9 or AF = 1 then:
+    ///     AL = AL - 6
+    ///     AH = AH - 1
+    ///     AF = 1
+    ///     CF = 1
+    /// else
+    ///     AF = 0
+    ///     CF = 0
+    /// in both cases:
+    /// clear the high nibble of AL.
+    ///
+    /// Example:
+    /// MOV AX, 02FFh  ; AH = 02, AL = 0FFh
+    /// AAS            ; AH = 01, AL = 09
+    /// RET
+    Aas,
+
+    /// Decimal adjust After Subtraction.
+    /// Corrects the result of subtraction of two packed BCD values.
+    ///
+    /// Algorithm:
+    /// if low nibble of AL > 9 or AF = 1 then:
+    ///     AL = AL - 6
+    ///     AF = 1
+    /// if AL > 9Fh or CF = 1 then:
+    ///     AL = AL - 60h
+    ///     CF = 1
+    ///
+    /// Example:
+    /// MOV AL, 0FFh  ; AL = 0FFh (-1)
+    /// DAS           ; AL = 99h, CF = 1
+    /// RET
+    Das,
+
+    /// Unsigned multiply.
+    ///
+    /// Algorithm:
+    /// when operand is a byte:
+    /// AX = AL * operand.
+    ///
+    /// when operand is a word:
+    /// (DX AX) = AX * operand.
+    ///
+    /// Example:
+    /// MOV AL, 200   ; AL = 0C8h
+    /// MOV BL, 4
+    /// MUL BL        ; AX = 0320h (800)
+    /// RET
+    ///
+    /// CF=OF=0 when high section of the result is zero.
+    Mul,
+
+    /// Signed multiply.
+    ///
+    /// Algorithm:
+    /// when operand is a byte:
+    /// AX = AL * operand.
+    ///
+    /// when operand is a word:
+    /// (DX AX) = AX * operand.
+    ///
+    /// Example:
+    /// MOV AL, -2
+    /// MOV BL, -4
+    /// IMUL BL      ; AX = 8
+    /// RET
+    Imul,
+
+    /// ASCII Adjust after Multiplication.
+    /// Corrects the result of multiplication of two BCD values.
+    ///
+    /// Algorithm:
+    /// AH = AL / 10
+    /// AL = remainder
+    ///
+    /// Example:
+    /// MOV AL, 15   ; AL = 0Fh
+    /// AAM          ; AH = 01, AL = 05
+    /// RET
+    ///
+    /// Affects, ZF, SF, PF
+    Aam,
+
+    /// Unsigned divide.
+    ///
+    /// Algorithm:
+    /// when operand is a byte:
+    /// AL = AX / operand
+    /// AH = remainder (modulus)
+    ///
+    /// when operand is a word:
+    /// AX = (DX AX) / operand
+    /// DX = remainder (modulus)
+    ///
+    /// Example:
+    /// MOV AX, 203   ; AX = 00CBh
+    /// MOV BL, 4
+    /// DIV BL        ; AL = 50 (32h), AH = 3
+    /// RET
+    ///
+    /// Don't affects any flag.
+    ///
+    /// Because the 8086 always looks at both registers during a word division,
+    /// you must make sure DX is cleared (set to 0) before you run the DIV instruction
+    /// if your number only fits in AX. If you forget to clear DX, the CPU will include whatever
+    /// random garbage data was left in DX in the division, and you will get an incorrect result.
+    Div,
+
+    /// Unsigned divide.
+    ///
+    /// Algorithm:
+    /// when operand is a byte:
+    /// AL = AX / operand
+    /// AH = remainder (modulus)
+    ///
+    /// when operand is a word:
+    /// AX = (DX AX) / operand
+    /// DX = remainder (modulus)
+    ///
+    /// Example:
+    /// MOV AX, -203 ; AX = 0FF35h
+    /// MOV BL, 4
+    /// IDIV BL      ; AL = -50 (0CEh), AH = -3 (0FDh)
+    /// RET
+    ///
+    /// Don't affects any flag.
+    ///
+    /// Because the 8086 always looks at both registers during a word division,
+    /// you must make sure DX is cleared (set to 0) before you run the DIV instruction
+    /// if your number only fits in AX. If you forget to clear DX, the CPU will include whatever
+    /// random garbage data was left in DX in the division, and you will get an incorrect result.
+    Idiv,
+
+    /// ASCII Adjust before Division.
+    /// Prepares two BCD values for division.
+    ///
+    /// Algorithm:
+    /// AL = (AH * 10) + AL
+    /// AH = 0
+    ///
+    /// Example:
+    /// MOV AX, 0105h   ; AH = 01, AL = 05
+    /// AAD             ; AH = 00, AL = 0Fh (15)
+    /// RET
+    ///
+    /// Affects ZF, SF, PF
+    Aad,
+
+    /// Convert byte into word.
+    ///
+    /// Algorithm:
+    ///
+    /// if high bit of AL = 1 then:
+    ///     AH = 255 (0FFh)
+    /// else
+    ///     AH = 0
+    ///
+    /// Example:
+    /// MOV AX, 0   ; AH = 0, AL = 0
+    /// MOV AL, -5  ; AX = 000FBh (251)
+    /// CBW         ; AX = 0FFFBh (-5)
+    /// RET
+    ///
+    /// Don't affect flags.
+    ///
+    /// This is like a sign extension using AH AL registers.
+    Cbw,
+
+    /// Convert Word to Double word.
+    ///
+    /// Algorithm:
+    /// if high bit of AX = 1 then:
+    ///     DX = 65535 (0FFFFh)
+    /// else
+    ///     DX = 0
+    ///
+    /// Example:
+    /// MOV DX, 0   ; DX = 0
+    /// MOV AX, 0   ; AX = 0
+    /// MOV AX, -5  ; DX AX = 00000h:0FFFBh
+    /// CWD         ; DX AX = 0FFFFh:0FFFBh
+    /// RET
+    ///
+    /// Don't affect flags.
+    ///
+    /// This is like a sign extension using DX AX registers.
+    Cwd,
+
+    /// Invert each bit of the operand.
+    ///
+    /// Algorithm:
+    /// if bit is 1 turn it to 0.
+    /// if bit is 0 turn it to 1.
+    ///
+    /// Example:
+    /// MOV AL, 00011011b
+    /// NOT AL   ; AL = 11100100b
+    /// RET
+    ///
+    /// Don't affect flags.
+    Not,
+
+    /// Shift operand1 Left. The number of shifts is set by operand2.
+    ///
+    /// Algorithm:
+    /// Shift all bits left, the bit that goes off is set to CF.
+    /// Zero bit is inserted to the right-most position.
+    ///
+    /// Example:
+    /// MOV AL, 11100000b
+    /// SHL AL, 1         ; AL = 11000000b,  CF=1.
+    /// RET
+    ///
+    /// Affects CF, OF.
+    ///
+    /// OF=0 if first operand keeps original sign.
+    Shl,
+
+    /// Shift operand1 Right. The number of shifts is set by operand2.
+    ///
+    /// Algorithm:
+    /// Shift all bits right, the bit that goes off is set to CF.
+    /// Zero bit is inserted to the left-most position.
+    ///
+    /// Example:
+    /// MOV AL, 00000111b
+    /// SHR AL, 1         ; AL = 00000011b,  CF=1.
+    /// RET
+    ///
+    /// Affects CF, OF.
+    ///
+    /// OF=0 if first operand keeps original sign.
+    Shr,
+
+    /// Shift Arithmetic operand1 Right. The number of shifts is set by operand2.
+    ///
+    /// Algorithm:
+    ///
+    /// Shift all bits right, the bit that goes off is set to CF.
+    /// The sign bit that is inserted to the left-most position has the same value as before shift.
+    ///
+    /// Example:
+    /// MOV AL, 0E0h      ; AL = 11100000b
+    /// SAR AL, 1         ; AL = 11110000b,  CF=0.
+    ///
+    /// MOV BL, 4Ch       ; BL = 01001100b
+    /// SAR BL, 1         ; BL = 00100110b,  CF=0.
+    /// RET
+    ///
+    /// Affects CF, OF.
+    ///
+    /// OF=0 if first operand keeps original sign.
+    Sar,
+
+    /// Rotate operand1 left. The number of rotates is set by operand2.
+    ///
+    /// Algorithm:
+    /// shift all bits left, the bit that goes off is set to CF and the same bit is inserted to the right-most position.
+    ///
+    /// Example:
+    /// MOV AL, 1Ch       ; AL = 00011100b
+    /// ROL AL, 1         ; AL = 00111000b,  CF=0.
+    /// RET
+    ///
+    /// Affects CF, OF.
+    ///
+    /// OF=0 if first operand keeps original sign.
+    Rol,
+
+    /// Rotate operand1 right. The number of rotates is set by operand2.
+    ///
+    /// Algorithm:
+    /// shift all bits right, the bit that goes off is set to CF and the same bit is inserted to the left-most position.
+    ///
+    /// Example:
+    /// MOV AL, 1Ch       ; AL = 00011100b
+    /// ROR AL, 1         ; AL = 00001110b,  CF=0.
+    /// RET
+    ///
+    /// Affects CF, OF.
+    ///
+    /// OF=0 if first operand keeps original sign.
+    Ror,
+
+    /// Rotate operand1 left through Carry Flag. The number of rotates is set by operand2.
+    /// When immediate is greater then 1, assembler generates several RCL xx, 1 instructions because 8086 has machine code only for this instruction (the same principle works for all other shift/rotate instructions).
+    ///
+    /// Algorithm:
+    /// shift all bits left, the bit that goes off is set to CF and previous value of CF is inserted to the right-most position.
+    ///
+    /// Example:
+    /// STC               ; set carry (CF=1).
+    /// MOV AL, 1Ch       ; AL = 00011100b
+    /// RCL AL, 1         ; AL = 00111001b,  CF=0.
+    /// RET
+    Rcl,
+
+    /// Rotate operand1 right through Carry Flag. The number of rotates is set by operand2.
+    ///
+    /// Algorithm:
+    /// shift all bits right, the bit that goes off is set to CF and previous value of CF is inserted to the left-most position.
+    ///
+    /// Example:
+    /// STC               ; set carry (CF=1).
+    /// MOV AL, 1Ch       ; AL = 00011100b
+    /// RCR AL, 1         ; AL = 10001110b,  CF=0.
+    /// RET
+    Rcr,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -321,6 +647,25 @@ impl Display for OperationType {
             Self::Daa => write!(f, "daa"),
             Self::Sbb => write!(f, "sbb"),
             Self::Dec => write!(f, "dec"),
+            Self::Neg => write!(f, "neg"),
+            Self::Aas => write!(f, "aas"),
+            Self::Das => write!(f, "das"),
+            Self::Mul => write!(f, "mul"),
+            Self::Imul => write!(f, "imul"),
+            Self::Aam => write!(f, "aam"),
+            Self::Div => write!(f, "div"),
+            Self::Idiv => write!(f, "idiv"),
+            Self::Aad => write!(f, "aad"),
+            Self::Cbw => write!(f, "cbw"),
+            Self::Cwd => write!(f, "cwd"),
+            Self::Not => write!(f, "not"),
+            Self::Shl => write!(f, "shl"),
+            Self::Shr => write!(f, "shr"),
+            Self::Sar => write!(f, "sar"),
+            Self::Rol => write!(f, "rol"),
+            Self::Ror => write!(f, "ror"),
+            Self::Rcl => write!(f, "rcl"),
+            Self::Rcr => write!(f, "rcr"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
@@ -375,6 +720,10 @@ pub enum InstructionBitsUsage {
 
     /// Instruction Pointer Increment.
     IpInc,
+
+    /// When 0, Shift/rotate count is 1.
+    /// When 1, Shift rotate count is specified in CL register.
+    V,
 
     // Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     // TODO: Can we remove it?

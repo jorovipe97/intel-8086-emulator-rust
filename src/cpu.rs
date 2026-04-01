@@ -68,6 +68,25 @@ impl Cpu {
             OperationType::Daa => todo!(),
             OperationType::Sbb => todo!(),
             OperationType::Dec => destination_value.wrapping_sub(1),
+            OperationType::Neg => (!destination_value).wrapping_add(1), // Two's complement negation
+            OperationType::Aas => todo!(),
+            OperationType::Das => todo!(),
+            OperationType::Mul => todo!(),
+            OperationType::Imul => todo!(),
+            OperationType::Aam => todo!(),
+            OperationType::Div => todo!(),
+            OperationType::Idiv => todo!(),
+            OperationType::Aad => todo!(),
+            OperationType::Cbw => todo!(),
+            OperationType::Cwd => todo!(),
+            OperationType::Not => !destination_value,
+            OperationType::Shl => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Shr => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Sar => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Rol => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Ror => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Rcl => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Rcr => todo!(), // TODO: OF=0 if first operand keeps original sign.
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe

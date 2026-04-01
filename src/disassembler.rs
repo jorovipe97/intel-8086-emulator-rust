@@ -43,7 +43,19 @@ impl Disassembler {
         //
         // If destination or source is not register or a instruction pointer increment do not add size of destination.
         if !matches!(instruction.operands.destination, Operand::Register(_))
-            && !matches!(instruction.operands.source, Operand::Register(_))
+            && !(
+                matches!(instruction.operands.source, Operand::Register(_))
+                // On this instruction altough source operand may be the cl register it does not mean
+                // we are operatying on 8 byte, since destination can be a memory location
+                // and the source operand means how many bits to shift.
+                && instruction.operation != OperationType::Shl
+                && instruction.operation != OperationType::Shr
+                && instruction.operation != OperationType::Sar
+                && instruction.operation != OperationType::Rol
+                && instruction.operation != OperationType::Ror
+                && instruction.operation != OperationType::Rcl
+                && instruction.operation != OperationType::Rcr
+            )
             && !matches!(
                 instruction.operands.destination,
                 Operand::InstructionPointerIncrement(_)
@@ -53,12 +65,18 @@ impl Disassembler {
                 instruction.operands.destination,
                 Operand::SegmentRegister(_)
             )
-            && instruction.operation != OperationType::Lahf
+            && instruction.operation != OperationType::Lahf // TODO: Configure this from the instructions table
             && instruction.operation != OperationType::Sahf
             && instruction.operation != OperationType::Pushf
             && instruction.operation != OperationType::Popf
             && instruction.operation != OperationType::Aaa
             && instruction.operation != OperationType::Daa
+            && instruction.operation != OperationType::Aas
+            && instruction.operation != OperationType::Das
+            && instruction.operation != OperationType::Aam
+            && instruction.operation != OperationType::Aad
+            && instruction.operation != OperationType::Cbw
+            && instruction.operation != OperationType::Cwd
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

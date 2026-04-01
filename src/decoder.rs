@@ -180,12 +180,29 @@ impl<'a> Decoder<'a> {
 
         let has_reg = has[InstructionBitsUsage::Reg as usize];
         let has_mod = has[InstructionBitsUsage::Mod as usize];
+        let has_v = has[InstructionBitsUsage::V as usize];
         let has_ip_inc = has[InstructionBitsUsage::IpInc as usize];
         let has_segment_register = has[InstructionBitsUsage::SR as usize];
         let has_d = has[InstructionBitsUsage::D as usize];
 
         if has_reg {
             reg_operand = self.get_reg_operand(bits_parts[InstructionBitsUsage::Reg as usize], w)?
+        }
+
+        if has_v {
+            // This is used in shift operations.
+            // When 0, Shift/rotate count is 1.
+            // When 1, Shift rotate count is specified in CL register.
+            let v_flag = bits_parts[InstructionBitsUsage::V as usize];
+            reg_operand = if v_flag == 0 {
+                Operand::Immediate(1)
+            } else {
+                Operand::Register(RegisterInfo {
+                    register_name: RegisterName::C,
+                    offset: 0,
+                    count: 1,
+                })
+            };
         }
 
         if has_segment_register {

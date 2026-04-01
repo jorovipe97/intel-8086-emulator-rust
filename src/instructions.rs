@@ -30,6 +30,12 @@ const SR: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
+const V: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::V,
+    bit_count: 1,
+    ..InstructionBits::DEFAULT
+};
+
 const W: InstructionBits = InstructionBits {
     usage: InstructionBitsUsage::W,
     bit_count: 1,
@@ -1047,6 +1053,359 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
                 | CpuFlags::PF.bits()
                 | CpuFlags::AF.bits(),
         ),
+    },
+    InstructionEncoding {
+        op: OperationType::Neg,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b011,
+            },
+            RM,
+        ],
+        // All except the CF.
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Aas,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b0011_1111,
+        }],
+        // Just affects CF and AF
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Das,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b0010_1111,
+        }],
+        // Just affects CF and AF
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Mul,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(1), // Source is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b100,
+            },
+            RM,
+        ],
+        // Only CF and OF.
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Imul,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(0), // Source is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b101,
+            },
+            RM,
+        ],
+        // Only CF and OF.
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Aam,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b11010100,
+            },
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0000_1010,
+            },
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::ZF.bits() | CpuFlags::SF.bits() | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Div,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(1), // Source is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b110,
+            },
+            RM,
+        ],
+        // Don't affect flags.
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Idiv,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(0), // Source is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b111,
+            },
+            RM,
+        ],
+        // Don't affect flags.
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Aad,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1101_0101,
+            },
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b0000_1010,
+            },
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(
+            CpuFlags::ZF.bits() | CpuFlags::SF.bits() | CpuFlags::PF.bits(),
+        ),
+    },
+    InstructionEncoding {
+        op: OperationType::Cbw,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1001_1000,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cwd,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1001_1001,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Not,
+        bits: &[
+            InstructionBits {
+                // Register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1111011,
+            },
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b010,
+            },
+            RM,
+        ],
+        // Don't affect flags.
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Shl,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b100,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Shr,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b101,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Sar,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b111,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Rol,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b000,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Ror,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b001,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Rcl,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b010,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
+    },
+    InstructionEncoding {
+        op: OperationType::Rcr,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b110100,
+            },
+            V,
+            W,
+            implicit_d(0), // Destination is always computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b011,
+            },
+            RM,
+        ],
+        affected_cpu_flags: CpuFlags::from_bits_truncate(CpuFlags::CF.bits() | CpuFlags::OF.bits()),
     },
     InstructionEncoding {
         op: OperationType::Jnz,
