@@ -598,6 +598,39 @@ pub enum OperationType {
     /// RET
     Test,
 
+    /// Bitwise or.
+    ///
+    /// Logical OR between all bits of two operands. Result is stored in first operand.
+    ///
+    /// These rules apply:
+    ///
+    /// 1 OR 1 = 1
+    /// 1 OR 0 = 1
+    /// 0 OR 1 = 1
+    /// 0 OR 0 = 0
+    ///
+    /// Example:
+    /// MOV AL, 'A'       ; AL = 01000001b
+    /// OR AL, 00100000b  ; AL = 01100001b  ('a')
+    /// RET
+    Or,
+
+    /// Bitwise XOR
+    /// Logical XOR (Exclusive OR) between all bits of two operands. Result is stored in first operand.
+    ///
+    /// These rules apply:
+    ///
+    /// 1 XOR 1 = 0
+    /// 1 XOR 0 = 1
+    /// 0 XOR 1 = 1
+    /// 0 XOR 0 = 0
+    ///
+    /// Example:
+    /// MOV AL, 00000111b
+    /// XOR AL, 00000010b    ; AL = 00000101b
+    /// RET
+    Xor,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -702,6 +735,8 @@ impl Display for OperationType {
             Self::Rcr => write!(f, "rcr"),
             Self::And => write!(f, "and"),
             Self::Test => write!(f, "test"),
+            Self::Or => write!(f, "or"),
+            Self::Xor => write!(f, "xor"),
             Self::Jnz => write!(f, "jnz"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),

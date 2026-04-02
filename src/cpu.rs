@@ -89,6 +89,8 @@ impl Cpu {
             OperationType::Rcr => todo!(), // TODO: OF=0 if first operand keeps original sign.
             OperationType::And => destination_value & source_value,
             OperationType::Test => destination_value & source_value,
+            OperationType::Or => destination_value | source_value,
+            OperationType::Xor => destination_value ^ source_value,
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe

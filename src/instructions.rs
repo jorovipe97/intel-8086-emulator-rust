@@ -1564,6 +1564,126 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         ),
     },
     InstructionEncoding {
+        op: OperationType::Or,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b000010,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Or,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b1000000,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(0), // Destination is computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b001,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Or,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0000110,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Xor,
+        bits: &[
+            InstructionBits {
+                // Register/memory with register to either
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 6,
+                value: 0b001100,
+            },
+            D,
+            W,
+            MOD,
+            REG,
+            RM,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Xor,
+        bits: &[
+            InstructionBits {
+                // Immediate to register/memory
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                // This is wrong in the official 8086 manual I have to rever engineer
+                // produced nasm binary.
+                value: 0b1000000,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(0), // Destination is computed from mod+rm fields.
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b110,
+            },
+            RM,
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
+        op: OperationType::Xor,
+        bits: &[
+            InstructionBits {
+                // Immediate to accumulator (A)
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 7,
+                value: 0b0011010,
+            },
+            W,
+            W_MAKES_DATA_WIDE,
+            implicit_d(1),       // Destination is the reg field (The accumulator)
+            implicit_reg(0b000), // 000 -> AX when w is 1. Or AL when w is 0.
+            DATA,
+            DATA_IF_W,
+        ],
+        affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {
