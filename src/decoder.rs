@@ -69,7 +69,12 @@ impl<'a> Decoder<'a> {
                 // Note that both prefix instructions have the same opcode, the difference
                 // depends on the instruction after the prefix.
                 match result.operation {
-                    OperationType::Movsb => result.prefix = OperationType::Rep,
+                    OperationType::Movsb
+                    | OperationType::Movsw
+                    | OperationType::Lodsb
+                    | OperationType::Lodsw
+                    | OperationType::Stosb
+                    | OperationType::Stosw => result.prefix = OperationType::Rep,
                     invalid_operation => {
                         return Err(anyhow!(
                             "operation {invalid_operation} cannot be prefixed with rep"

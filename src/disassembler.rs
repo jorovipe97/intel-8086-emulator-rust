@@ -85,6 +85,11 @@ impl Disassembler {
             && instruction.operation != OperationType::Cbw
             && instruction.operation != OperationType::Cwd
             && instruction.operation != OperationType::Movsb
+            && instruction.operation != OperationType::Movsw
+            && instruction.operation != OperationType::Lodsb
+            && instruction.operation != OperationType::Lodsw
+            && instruction.operation != OperationType::Stosb
+            && instruction.operation != OperationType::Stosw
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

@@ -678,6 +678,132 @@ pub enum OperationType {
     /// a2 DB 5 DUP(0)
     Movsb,
 
+    /// Copy word at DS:[SI] to ES:[DI]. Update SI and DI.
+    ///
+    /// Algorithm:
+    ///
+    /// ES:[DI] = DS:[SI]
+    /// if DF = 0 then
+    ///     SI = SI + 2
+    ///     DI = DI + 2
+    /// else
+    ///     SI = SI - 2
+    ///     DI = DI - 2
+    /// Example:
+    ///
+    /// ORG 100h
+    /// CLD
+    /// LEA SI, a1
+    /// LEA DI, a2
+    /// MOV CX, 5
+    /// REP MOVSW
+    /// RET
+    ///
+    /// a1 DW 1,2,3,4,5
+    /// a2 DW 5 DUP(0)
+    Movsw,
+
+    /// Load byte at DS:[SI] into AL. Update SI.
+    ///
+    /// Algorithm:
+    ///
+    /// AL = DS:[SI]
+    /// if DF = 0 then
+    ///     SI = SI + 1
+    /// else
+    ///     SI = SI - 1
+    ///
+    /// Example:
+    ///
+    /// ORG 100h
+    ///
+    /// LEA SI, a1
+    /// MOV CX, 5
+    /// MOV AH, 0Eh
+    ///
+    /// m: LODSB
+    /// INT 10h
+    /// LOOP m
+    ///
+    /// RET
+    ///
+    /// a1 DB 'H', 'e', 'l', 'l', 'o'
+    Lodsb,
+
+    /// Load word at DS:[SI] into AX. Update SI.
+    ///
+    /// Algorithm:
+    ///
+    /// AX = DS:[SI]
+    /// if DF = 0 then
+    ///     SI = SI + 2
+    /// else
+    ///     SI = SI - 2
+    ///
+    /// Example:
+    ///
+    /// ORG 100h
+    ///
+    /// LEA SI, a1
+    /// MOV CX, 5
+    ///
+    /// REP LODSW   ; finally there will be 555h in AX.
+    ///
+    /// RET
+    ///
+    /// a1 dw 111h, 222h, 333h, 444h, 555h
+    Lodsw,
+
+    /// Store byte in AL into ES:[DI]. Update DI.
+    ///
+    /// Algorithm:
+    ///
+    /// ES:[DI] = AL
+    /// if DF = 0 then
+    ///     DI = DI + 1
+    /// else
+    ///     DI = DI - 1
+    ///
+    /// Example:
+    ///
+    /// ORG 100h
+    ///
+    /// LEA DI, a1
+    /// MOV AL, 12h
+    /// MOV CX, 5
+    ///
+    /// REP STOSB
+    ///
+    /// RET
+    ///
+    /// a1 DB 5 dup(0)
+    Stosb,
+
+    /// Store word in AX into ES:[DI]. Update DI.
+    ///
+    /// Algorithm:
+    ///
+    /// ES:[DI] = AX
+    /// if DF = 0 then
+    ///     DI = DI + 2
+    /// else
+    ///     DI = DI - 2
+    ///
+    /// Example:
+    ///
+    /// ORG 100h
+    ///
+    /// LEA DI, a1
+    /// MOV AX, 1234h
+    /// MOV CX, 5
+    ///
+    /// REP STOSW
+    ///
+    /// RET
+    ///
+    /// a1 DW 5 dup(0)
+    Stosw,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -795,6 +921,11 @@ impl Display for OperationType {
             Self::Jnz => write!(f, "jnz"),
             Self::Rep => write!(f, "rep"),
             Self::Movsb => write!(f, "movsb"),
+            Self::Movsw => write!(f, "movsw"),
+            Self::Lodsb => write!(f, "lodsb"),
+            Self::Lodsw => write!(f, "lodsw"),
+            Self::Stosb => write!(f, "stosb"),
+            Self::Stosw => write!(f, "stosw"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
