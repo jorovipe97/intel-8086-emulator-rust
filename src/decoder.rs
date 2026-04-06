@@ -29,10 +29,19 @@ impl<'a> Decoder<'a> {
     ) -> Result<(DecodedInstruction, MemoryAccess)> {
         let mut result = DecodedInstruction::DEFAULT;
         let mut next_memory_address = memory_access;
+        let mut prefix_operation = OperationType::None;
 
         // Compares current byte location with all the instruction encodings in INSTRUCTIONS_TABLE constant.
         for candidate_encoding in INSTRUCTION_ENCODINGS_TABLE {
-            (result, next_memory_address) = self.try_decode(candidate_encoding, memory_access)?;
+            (result, next_memory_address) =
+                self.try_decode(candidate_encoding, next_memory_address)?;
+
+            // If instruction is a prefix, extract it and get next instruction.
+            if result.operation.is_prefix() {
+                prefix_operation = result.operation;
+                // Get next instruction.
+                continue;
+            }
 
             if result.operation != OperationType::None {
                 // We were able to decode the instruction, no need to keep looking for candidates.
@@ -47,6 +56,28 @@ impl<'a> Decoder<'a> {
                 "instruction is unknown, at position {}",
                 next_memory_address.absolute_address()
             ));
+        }
+
+        match prefix_operation {
+            OperationType::Rep => {
+                // If instruction after prefix is MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW
+                // then, prefix is rep.
+                //
+                // If instruction after prefix is CMPSB, CMPSW, SCASB, SCASW,
+                // then, prefix is repz.
+                //
+                // Note that both prefix instructions have the same opcode, the difference
+                // depends on the instruction after the prefix.
+                match result.operation {
+                    OperationType::Movsb => result.prefix = OperationType::Rep,
+                    invalid_operation => {
+                        return Err(anyhow!(
+                            "operation {invalid_operation} cannot be prefixed with rep"
+                        ));
+                    }
+                }
+            }
+            _ => (),
         }
 
         Ok((result, next_memory_address))

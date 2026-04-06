@@ -24,6 +24,11 @@ bitflags! {
         /// Actually this flag take the value of the most significant bit.
         const SF = 1 << 7;
 
+        /// Direction Flag (DF) - this flag is used by some instructions like MOVSB, MOBSW to process data chains,
+        /// when this flag is set to 0 - the processing is done forward,
+        /// when this flag is set to 1 the processing is done backward.
+        const DF = 1 << 10;
+
         /// Overflow Flag (OF) - set to 1 when there is a signed overflow. For example,
         /// when you add bytes 100 + 50 (result is not in range -128...127).
         const OF = 1 << 11;
@@ -631,6 +636,48 @@ pub enum OperationType {
     /// RET
     Xor,
 
+    /// Repeat following MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW instructions CX times.
+    ///
+    /// Algorithm:
+    ///
+    /// check_cx:
+    ///
+    /// if CX <> 0 then
+    /// do following chain instruction
+    ///     CX = CX - 1
+    ///     go back to check_cx
+    ///     else
+    /// exit from REP cycle
+    Rep,
+
+    /// Copy byte at DS:[SI] to ES:[DI]. Update SI and DI.
+    ///
+    /// Algorithm:
+    ///
+    /// ES:[DI] = DS:[SI]
+    ///     if DF = 0 then
+    ///     SI = SI + 1
+    ///     DI = DI + 1
+    /// else
+    ///     SI = SI - 1
+    ///     DI = DI - 1
+    ///
+    /// Example:
+    ///
+    /// ORG 100h
+    ///
+    /// CLD
+    /// LEA SI, a1
+    /// LEA DI, a2
+    /// MOV CX, 5
+    /// REP MOVSB
+    ///
+    /// RET
+    ///
+    /// a1 DB 1,2,3,4,5
+    /// a2 DB 5 DUP(0)
+    Movsb,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -685,6 +732,14 @@ pub enum OperationType {
 
 impl OperationType {
     pub const NONE: OperationType = OperationType::None;
+
+    /// Returns true if the operation is a prefix.
+    pub fn is_prefix(&self) -> bool {
+        match self {
+            Self::Rep => true,
+            _ => false,
+        }
+    }
 }
 
 impl Display for OperationType {
@@ -738,6 +793,8 @@ impl Display for OperationType {
             Self::Or => write!(f, "or"),
             Self::Xor => write!(f, "xor"),
             Self::Jnz => write!(f, "jnz"),
+            Self::Rep => write!(f, "rep"),
+            Self::Movsb => write!(f, "movsb"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
@@ -767,12 +824,26 @@ pub enum InstructionBitsUsage {
     // NOTE(casey): The 0 value, indicating the end of the instruction encoding array
     End,
     Literal,
+
+    /// If D = 0; Instruction source is specified in REG field.
+    /// If D = 1; Instruction destination is specified in REG field.
     D,
 
     /// If S = 0; No sign extension.
     /// If S = 1; Sign extend 8-bit immediate data to 16 bits.
     S,
+
+    /// If W = 0; Instruction operates on byte data.
+    /// If W = 1; Instruction operates on word data.
     W,
+
+    /// If V = 0; Shift/rotate count is 1.
+    /// If V = 1; Shift rotate count is specified in CL register.
+    V,
+
+    /// If Z = 0; Repeat/loop while zero flag is clear.
+    /// If Z = 1; Repeat/loop while zero flag is set.
+    Z,
 
     /// Used as an implicit field in the instruction table to force a register
     /// w(idth) when using mod+rm fields. This is useful for the case when this register
@@ -791,10 +862,6 @@ pub enum InstructionBitsUsage {
 
     /// Instruction Pointer Increment.
     IpInc,
-
-    /// When 0, Shift/rotate count is 1.
-    /// When 1, Shift rotate count is specified in CL register.
-    V,
 
     // Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     // TODO: Can we remove it?

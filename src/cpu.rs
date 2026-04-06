@@ -91,6 +91,8 @@ impl Cpu {
             OperationType::Test => destination_value & source_value,
             OperationType::Or => destination_value | source_value,
             OperationType::Xor => destination_value ^ source_value,
+            OperationType::Rep => todo!(),
+            OperationType::Movsb => todo!(),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe

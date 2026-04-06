@@ -27,6 +27,13 @@ impl Disassembler {
 
     /// Receives a DecodedInstruction and prints its ASM representation.
     pub fn add_instruction(&mut self, instruction: &DecodedInstruction) {
+        // If has prefix, print it
+        if instruction.prefix != OperationType::None {
+            self.string_builder
+                .push_str(&instruction.prefix.to_string());
+            self.string_builder.push(' ');
+        }
+
         // Print the mnemonic name.
         self.string_builder
             .push_str(&instruction.operation.to_string());
@@ -77,6 +84,7 @@ impl Disassembler {
             && instruction.operation != OperationType::Aad
             && instruction.operation != OperationType::Cbw
             && instruction.operation != OperationType::Cwd
+            && instruction.operation != OperationType::Movsb
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

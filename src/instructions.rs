@@ -1684,6 +1684,24 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: ARITHMETIC_AND_LOGIC_FLAGS,
     },
     InstructionEncoding {
+        op: OperationType::Rep,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b11110011, // Last bit is z field.
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Movsb,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b10100100, // Last byte is w, if w = 0, operates on byte
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

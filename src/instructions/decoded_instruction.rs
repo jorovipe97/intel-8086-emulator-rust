@@ -13,6 +13,7 @@ pub struct OperandsUsage {
 /// Holds the information of an instruction after decoding from binary.
 #[derive(Debug, Clone, Copy)]
 pub struct DecodedInstruction {
+    pub prefix: OperationType,
     pub operation: OperationType,
 
     /// Size of the instruction in bytes.
@@ -29,6 +30,7 @@ pub struct DecodedInstruction {
 
 impl DecodedInstruction {
     pub const DEFAULT: Self = Self {
+        prefix: OperationType::None,
         operation: OperationType::None,
         size: 0,
         operands: OperandsUsage {
