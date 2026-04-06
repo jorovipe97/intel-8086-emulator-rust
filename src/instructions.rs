@@ -1693,6 +1693,26 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
+        // Same opcode as Rep, decoder detects the correct prefix
+        // based on the following instruction after the prefix.
+        op: OperationType::Repe,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b11110011, // Last bit is z field.
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Repne,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b11110010, // Last bit is z field.
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Movsb,
         bits: &[InstructionBits {
             usage: InstructionBitsUsage::Literal,
@@ -1743,6 +1763,24 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             usage: InstructionBitsUsage::Literal,
             bit_count: 8,
             value: 0b10101011, // Last byte is w, if w = 0, operates on byte
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cmpsb,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b10100110, // Last byte is w, if w = 0, operates on byte
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cmpsw,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b10100111, // Last byte is w, if w = 0, operates on byte
         }],
         affected_cpu_flags: CpuFlags::empty(),
     },

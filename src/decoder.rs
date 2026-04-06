@@ -64,7 +64,7 @@ impl<'a> Decoder<'a> {
                 // then, prefix is rep.
                 //
                 // If instruction after prefix is CMPSB, CMPSW, SCASB, SCASW,
-                // then, prefix is repz.
+                // then, prefix is repe.
                 //
                 // Note that both prefix instructions have the same opcode, the difference
                 // depends on the instruction after the prefix.
@@ -75,6 +75,9 @@ impl<'a> Decoder<'a> {
                     | OperationType::Lodsw
                     | OperationType::Stosb
                     | OperationType::Stosw => result.prefix = OperationType::Rep,
+                    OperationType::Cmpsb | OperationType::Cmpsw => {
+                        result.prefix = OperationType::Repe
+                    }
                     invalid_operation => {
                         return Err(anyhow!(
                             "operation {invalid_operation} cannot be prefixed with rep"

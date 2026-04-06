@@ -650,6 +650,40 @@ pub enum OperationType {
     /// exit from REP cycle
     Rep,
 
+    /// Repeat following CMPSB, CMPSW, SCASB, SCASW instructions while ZF = 1 (result is Equal), maximum CX times.
+    ///
+    /// Algorithm:
+    ///
+    /// check_cx:
+    ///
+    /// if CX <> 0 then
+    ///     do following chain instruction
+    ///     CX = CX - 1
+    ///     if ZF = 1 then:
+    ///         go back to check_cx
+    ///     else
+    ///         exit from REPE cycle
+    /// else
+    ///     exit from REPE cycle
+    Repe,
+
+    /// Repeat following CMPSB, CMPSW, SCASB, SCASW instructions while ZF = 0 (result is Not Equal), maximum CX times.
+    ///
+    /// Algorithm:
+    ///
+    /// check_cx:
+    ///
+    /// if CX <> 0 then
+    ///     do following chain instruction
+    ///     CX = CX - 1
+    ///     if ZF = 0 then:
+    ///         go back to check_cx
+    ///     else
+    ///         exit from REPNE cycle
+    /// else
+    ///     exit from REPNE cycle
+    Repne,
+
     /// Copy byte at DS:[SI] to ES:[DI]. Update SI and DI.
     ///
     /// Algorithm:
@@ -804,6 +838,36 @@ pub enum OperationType {
     /// a1 DW 5 dup(0)
     Stosw,
 
+    /// Compare bytes: ES:[DI] from DS:[SI].
+    ///
+    /// Algorithm:
+    ///
+    /// DS:[SI] - ES:[DI]
+    /// set flags according to result:
+    /// OF, SF, ZF, AF, PF, CF
+    /// if DF = 0 then
+    ///     SI = SI + 1
+    ///     DI = DI + 1
+    /// else
+    ///     SI = SI - 1
+    ///     DI = DI - 1
+    Cmpsb,
+
+    /// Compare words: ES:[DI] from DS:[SI].
+    ///
+    /// Algorithm:
+    ///
+    /// DS:[SI] - ES:[DI]
+    /// set flags according to result:
+    /// OF, SF, ZF, AF, PF, CF
+    /// if DF = 0 then
+    ///     SI = SI + 2
+    ///     DI = DI + 2
+    /// else
+    ///     SI = SI - 2
+    ///     DI = DI - 2
+    Cmpsw,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -862,7 +926,7 @@ impl OperationType {
     /// Returns true if the operation is a prefix.
     pub fn is_prefix(&self) -> bool {
         match self {
-            Self::Rep => true,
+            Self::Rep | Self::Repe | Self::Repne => true,
             _ => false,
         }
     }
@@ -920,12 +984,16 @@ impl Display for OperationType {
             Self::Xor => write!(f, "xor"),
             Self::Jnz => write!(f, "jnz"),
             Self::Rep => write!(f, "rep"),
+            Self::Repe => write!(f, "repe"),
+            Self::Repne => write!(f, "repne"),
             Self::Movsb => write!(f, "movsb"),
             Self::Movsw => write!(f, "movsw"),
             Self::Lodsb => write!(f, "lodsb"),
             Self::Lodsw => write!(f, "lodsw"),
             Self::Stosb => write!(f, "stosb"),
             Self::Stosw => write!(f, "stosw"),
+            Self::Cmpsb => write!(f, "cmpsb"),
+            Self::Cmpsw => write!(f, "cmpsw"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
