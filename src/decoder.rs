@@ -58,6 +58,7 @@ impl<'a> Decoder<'a> {
             ));
         }
 
+        // Compute prefix
         match prefix_operation {
             OperationType::Rep => {
                 // If instruction after prefix is MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW
@@ -75,9 +76,10 @@ impl<'a> Decoder<'a> {
                     | OperationType::Lodsw
                     | OperationType::Stosb
                     | OperationType::Stosw => result.prefix = OperationType::Rep,
-                    OperationType::Cmpsb | OperationType::Cmpsw => {
-                        result.prefix = OperationType::Repe
-                    }
+                    OperationType::Cmpsb
+                    | OperationType::Cmpsw
+                    | OperationType::Scasb
+                    | OperationType::Scasw => result.prefix = OperationType::Repe,
                     invalid_operation => {
                         return Err(anyhow!(
                             "operation {invalid_operation} cannot be prefixed with rep"
@@ -85,6 +87,17 @@ impl<'a> Decoder<'a> {
                     }
                 }
             }
+            OperationType::Repne => match result.operation {
+                OperationType::Cmpsb
+                | OperationType::Cmpsw
+                | OperationType::Scasb
+                | OperationType::Scasw => result.prefix = OperationType::Repne,
+                invalid_operation => {
+                    return Err(anyhow!(
+                        "operation {invalid_operation} cannot be prefixed with repne"
+                    ));
+                }
+            },
             _ => (),
         }
 

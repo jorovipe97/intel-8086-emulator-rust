@@ -868,6 +868,32 @@ pub enum OperationType {
     ///     DI = DI - 2
     Cmpsw,
 
+    /// Compare bytes: AL from ES:[DI].
+    ///
+    /// Algorithm:
+    ///
+    /// AL - ES:[DI]
+    /// set flags according to result:
+    /// OF, SF, ZF, AF, PF, CF
+    /// if DF = 0 then
+    ///     DI = DI + 1
+    /// else
+    ///     DI = DI - 1
+    Scasb,
+
+    /// Compare words: AX from ES:[DI].
+    ///
+    /// Algorithm:
+    ///
+    ///    AX - ES:[DI]
+    /// set flags according to result:
+    /// OF, SF, ZF, AF, PF, CF
+    /// if DF = 0 then
+    ///     DI = DI + 2
+    /// else
+    ///     DI = DI - 2
+    Scasw,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -994,6 +1020,8 @@ impl Display for OperationType {
             Self::Stosw => write!(f, "stosw"),
             Self::Cmpsb => write!(f, "cmpsb"),
             Self::Cmpsw => write!(f, "cmpsw"),
+            Self::Scasb => write!(f, "scasb"),
+            Self::Scasw => write!(f, "scasw"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
