@@ -348,10 +348,22 @@ repne scasb
 repne cmpsw
 repne scasw
 
+
+foo_label:
+; Direct within segment (Near Jump) (16 bits)
+call foo_label
+
+; Indirect within segment (Near Jump) (16 bits)
 call [39201]
 call [bp - 100]
 call sp
 call ax
+
+; Direct intersegment (Far Jump)
+call 1234h:5678h
+
+; Indirect intersegment (Far Jump)
+call far [8]
 
 jmp ax
 jmp di
