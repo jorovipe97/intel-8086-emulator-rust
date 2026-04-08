@@ -76,6 +76,11 @@ const IP_INC: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
+const IP_INTERSEGMENT: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::IpIntersegment,
+    ..InstructionBits::DEFAULT
+};
+
 /// Allows to declare an implicit d, so decoder knows if should use reg field
 /// as the destination (d==1) or the source (d==0).
 const fn implicit_d(value: u8) -> InstructionBits {
@@ -1800,6 +1805,87 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             bit_count: 8,
             value: 0b10101111, // Last byte is w, if w = 0, operates on byte
         }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Call,
+        bits: &[
+            // Direct within segment, 16-bits ip increment (near)
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_1000,
+            },
+            // The BitsIpInc is to indicate that the destination operand is an Instruction Pointer Increment
+            // However the actual data is extracted from data.
+            IP_INC,
+            // Increment is always encoded in two bytes.
+            W_MAKES_DATA_WIDE,
+            implicit_w(1),
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Indirect within segment
+        op: OperationType::Call,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1111_1111,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b010,
+            },
+            RM,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Operand should always be 16 bits.
+            implicit_w(1),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Direct intersegment
+        op: OperationType::Call,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1001_1010,
+            },
+            IP_INTERSEGMENT,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Indirect intersegment
+        op: OperationType::Call,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1111_1111,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b011,
+            },
+            RM,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Operand should always be 16 bits.
+            implicit_w(1),
+        ],
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {

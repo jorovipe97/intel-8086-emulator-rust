@@ -94,6 +94,7 @@ impl Disassembler {
             && instruction.operation != OperationType::Cmpsw
             && instruction.operation != OperationType::Scasb
             && instruction.operation != OperationType::Scasw
+            && instruction.operation != OperationType::Call
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push
@@ -151,6 +152,9 @@ impl Disassembler {
                 self.string_builder.push_str(&instruction_size.to_string());
                 self.string_builder.push('+');
                 self.string_builder.push_str(&ip_increment.to_string());
+            }
+            Operand::InstructionPointerIntersegment(ip_intersegment) => {
+                self.string_builder.push_str(&ip_intersegment.to_string());
             }
         }
     }

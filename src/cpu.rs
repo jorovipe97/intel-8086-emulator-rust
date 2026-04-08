@@ -104,6 +104,7 @@ impl Cpu {
             OperationType::Cmpsw => todo!(),
             OperationType::Scasb => todo!(),
             OperationType::Scasw => todo!(),
+            OperationType::Call => todo!(),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
@@ -191,6 +192,7 @@ impl Cpu {
             Operand::InstructionPointerIncrement(increment) => {
                 self.compute_instruction_pointer(&instruction, increment);
             }
+            Operand::InstructionPointerIntersegment(_) => todo!(),
         }
 
         Ok(MemoryAccess {
@@ -227,6 +229,7 @@ impl Cpu {
                 Ok(self.registers[reg_index])
             }
             Operand::InstructionPointerIncrement(ip_inc) => Ok(ip_inc as u16),
+            Operand::InstructionPointerIntersegment(_) => todo!(),
             // TODO: How are we going to do an immutable borrow to the memory?
             Operand::Memory(_) => Err(anyhow!("simulator still not supports memory operands")),
         }

@@ -132,6 +132,18 @@ impl Display for SegmentRegisterName {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct IpIntersegmentInfo {
+    pub code_segment: i32,
+    pub instruction_pointer: i32,
+}
+
+impl Display for IpIntersegmentInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{}:{}", self.code_segment, self.instruction_pointer)
+    }
+}
+
 /// The distint operand types that support the simulator
 #[derive(Debug, Clone, Copy)]
 pub enum Operand {
@@ -142,6 +154,9 @@ pub enum Operand {
     Register(RegisterInfo),
     Memory(MemoryDisplacementInfo),
     Immediate(i32),
+    /// Instruction pointer increment, holds increments for 8-bits (short) and 16-bits (near)
+    /// increments.
     InstructionPointerIncrement(i32),
+    InstructionPointerIntersegment(IpIntersegmentInfo),
     SegmentRegister(SegmentRegisterName),
 }

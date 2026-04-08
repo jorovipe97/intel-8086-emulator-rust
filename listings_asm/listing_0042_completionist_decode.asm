@@ -327,6 +327,9 @@ xor word [bx + si - 4332], 10328
 rep movsb
 rep cmpsb
 rep scasb
+
+; This is useless in practice as on each iteration it writes to the AL register
+; just last write is persited. We support it because is valid ASM.
 rep lodsb
 rep movsw
 rep cmpsw
@@ -339,6 +342,11 @@ rep lodsw
 ; assembles it just fine.
 rep stosb
 rep stosw
+
+repne cmpsb
+repne scasb
+repne cmpsw
+repne scasw
 
 call [39201]
 call [bp - 100]

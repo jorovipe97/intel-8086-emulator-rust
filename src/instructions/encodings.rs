@@ -894,6 +894,13 @@ pub enum OperationType {
     ///     DI = DI - 2
     Scasw,
 
+    /// Transfers control to procedure. Return address (IP) is pushed to stack.
+    /// 4-byte address may be entered in this form: 1234h:5678h, first value is a
+    /// segment second value is an offset. If it's a far call, then code segment is pushed to stack as well.
+    ///
+    /// To see how functions work: https://www.youtube.com/watch?v=7YyALikxAlU
+    Call,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -1022,6 +1029,7 @@ impl Display for OperationType {
             Self::Cmpsw => write!(f, "cmpsw"),
             Self::Scasb => write!(f, "scasb"),
             Self::Scasw => write!(f, "scasw"),
+            Self::Call => write!(f, "call"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
@@ -1087,11 +1095,15 @@ pub enum InstructionBitsUsage {
     /// Segment registers.
     SR,
 
-    /// Instruction Pointer Increment.
+    /// Instruction Pointer Increment can be short (8 bits) or near (16 bits).
     IpInc,
 
-    // Used to track how many possible bits usages we support, this is not an actual flag in 8086.
+    /// Absolute address for far jumps, encoded in asm as cs:ip
+    /// This is an absolute address not an increment.
+    IpIntersegment,
+
     // TODO: Can we remove it?
+    /// Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     Count,
 }
 

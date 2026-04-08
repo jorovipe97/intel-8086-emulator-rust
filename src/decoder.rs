@@ -4,6 +4,7 @@ use crate::instructions::decoded_instruction::DecodedInstruction;
 use crate::instructions::encodings::{
     InstructionBitsUsage, InstructionEncoding, OperationType, RegisterName,
 };
+use crate::instructions::operands::IpIntersegmentInfo;
 use crate::instructions::operands::SegmentRegisterName;
 use crate::instructions::operands::{MemoryDisplacementInfo, Operand, RegisterInfo};
 use crate::memory::{Memory, MemoryAccess};
@@ -234,6 +235,7 @@ impl<'a> Decoder<'a> {
         let has_mod = has[InstructionBitsUsage::Mod as usize];
         let has_v = has[InstructionBitsUsage::V as usize];
         let has_ip_inc = has[InstructionBitsUsage::IpInc as usize];
+        let has_ip_intersegment = has[InstructionBitsUsage::IpIntersegment as usize];
         let has_segment_register = has[InstructionBitsUsage::SR as usize];
         let has_d = has[InstructionBitsUsage::D as usize];
 
@@ -285,6 +287,20 @@ impl<'a> Decoder<'a> {
                 .parse_data_value(&mut memory_access_internal, has_ip_inc, data_is_w)
                 .with_context(|| "could not extract instruction pointer increment")?;
             mod_operand = Operand::InstructionPointerIncrement(ip_increment)
+        }
+
+        if has_ip_intersegment {
+            let instruction_pointer = self
+                .parse_data_value(&mut memory_access_internal, true, true)
+                .with_context(|| "could not extract instruction pointer from intersegment jump")?;
+            let code_segment = self
+                .parse_data_value(&mut memory_access_internal, true, true)
+                .with_context(|| "could not extract code segment from intersegment jump")?;
+
+            mod_operand = Operand::InstructionPointerIntersegment(IpIntersegmentInfo {
+                code_segment,
+                instruction_pointer,
+            })
         }
 
         // How many bytes did move the internal cursor to decode the full instruction.
