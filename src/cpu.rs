@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 
 use crate::{
     instructions::{
-        decoded_instruction::DecodedInstruction,
+        decoded_instruction::{DecodedInstruction, DecodedInstructionExtraAttributes},
         encodings::{CpuFlags, OperationType, RegisterName},
         operands::{Operand, SegmentRegisterName},
     },
@@ -447,7 +447,10 @@ impl Cpu {
             return;
         }
 
-        if instruction.is_w_field_set {
+        if instruction
+            .extra_attributes
+            .contains(DecodedInstructionExtraAttributes::IS_WIDE)
+        {
             if (final_value & (1 << 15)) != 0 {
                 self.set_flag(CpuFlags::SF);
             } else {
@@ -555,7 +558,10 @@ impl Cpu {
         }
 
         if instruction.operation == OperationType::Add {
-            if instruction.is_w_field_set {
+            if instruction
+                .extra_attributes
+                .contains(DecodedInstructionExtraAttributes::IS_WIDE)
+            {
                 // TODO: Can check sign without casting, just using most significative bit flag.
                 // If operands are positive but result is negative, an overflow happened.
                 let positive_overflow = (destination_value as i16) >= 0
@@ -595,7 +601,10 @@ impl Cpu {
             // For sub, an overflow happens if operands have different sign
             // and the result have a sign different to the first operand
             // then an overflow happened
-            let most_significate_bit: u16 = if instruction.is_w_field_set {
+            let most_significate_bit: u16 = if instruction
+                .extra_attributes
+                .contains(DecodedInstructionExtraAttributes::IS_WIDE)
+            {
                 1 << 15
             } else {
                 1 << 7

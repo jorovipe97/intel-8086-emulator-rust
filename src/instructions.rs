@@ -81,6 +81,11 @@ const IP_INTERSEGMENT: InstructionBits = InstructionBits {
     ..InstructionBits::DEFAULT
 };
 
+const INDIRECT_FAR_JUMP: InstructionBits = InstructionBits {
+    usage: InstructionBitsUsage::IndirectFarJump,
+    ..InstructionBits::DEFAULT
+};
+
 /// Allows to declare an implicit d, so decoder knows if should use reg field
 /// as the destination (d==1) or the source (d==0).
 const fn implicit_d(value: u8) -> InstructionBits {
@@ -1885,6 +1890,7 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             implicit_d(0),
             // Operand should always be 16 bits.
             implicit_w(1),
+            INDIRECT_FAR_JUMP,
         ],
         affected_cpu_flags: CpuFlags::empty(),
     },

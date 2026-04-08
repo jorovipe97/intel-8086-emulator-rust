@@ -1,13 +1,21 @@
-use crate::instructions::encodings::CpuFlags;
-
 use super::encodings::OperationType;
 use super::operands::Operand;
+use crate::instructions::encodings::CpuFlags;
+use bitflags::bitflags;
 
 // Holds the operands of the decoded instruction.
 #[derive(Debug, Clone, Copy)]
 pub struct OperandsUsage {
     pub destination: Operand,
     pub source: Operand,
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct DecodedInstructionExtraAttributes: u32 {
+        const IS_WIDE = 1 << 0;
+        const IS_INDIRECT_FAR_JUMP = 1 << 1;
+    }
 }
 
 /// Holds the information of an instruction after decoding from binary.
@@ -22,8 +30,9 @@ pub struct DecodedInstruction {
     /// The operands of the instruction.
     pub operands: OperandsUsage,
 
-    /// Do this instruction have the W flag set to 1?
-    pub is_w_field_set: bool,
+    /// Holds additional info needed by the disasembler or cpu simulation.
+    /// eg: is data wide, or is a far jump.
+    pub extra_attributes: DecodedInstructionExtraAttributes,
 
     pub affected_cpu_flags: CpuFlags,
 }
@@ -37,7 +46,7 @@ impl DecodedInstruction {
             destination: Operand::None,
             source: Operand::None,
         },
-        is_w_field_set: false,
+        extra_attributes: DecodedInstructionExtraAttributes::empty(),
         affected_cpu_flags: CpuFlags::empty(),
     };
 }

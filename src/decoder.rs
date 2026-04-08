@@ -1,6 +1,7 @@
 use crate::instructions::INSTRUCTION_ENCODINGS_TABLE;
 use crate::instructions::MAX_INSTRUCTION_BYTE_COUNT;
 use crate::instructions::decoded_instruction::DecodedInstruction;
+use crate::instructions::decoded_instruction::DecodedInstructionExtraAttributes;
 use crate::instructions::encodings::{
     InstructionBitsUsage, InstructionEncoding, OperationType, RegisterName,
 };
@@ -225,7 +226,12 @@ impl<'a> Decoder<'a> {
 
         let has_w = has[InstructionBitsUsage::W as usize];
         if has_w && w == 1 {
-            result.is_w_field_set = true
+            result.extra_attributes = DecodedInstructionExtraAttributes::IS_WIDE;
+        }
+
+        let has_indirect_far_jump = has[InstructionBitsUsage::IndirectFarJump as usize];
+        if has_indirect_far_jump {
+            result.extra_attributes |= DecodedInstructionExtraAttributes::IS_INDIRECT_FAR_JUMP;
         }
 
         let mut reg_operand = Operand::None;

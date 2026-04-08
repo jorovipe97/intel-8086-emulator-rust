@@ -1,3 +1,4 @@
+use crate::instructions::decoded_instruction::DecodedInstructionExtraAttributes;
 use crate::instructions::operands::Operand;
 use crate::instructions::{decoded_instruction::DecodedInstruction, encodings::OperationType};
 use anyhow::{Context, Result};
@@ -101,12 +102,22 @@ impl Disassembler {
                 || instruction.operation == OperationType::Pop
             {
                 self.string_builder.push_str("word ");
-            } else if instruction.is_w_field_set {
+            } else if instruction
+                .extra_attributes
+                .contains(DecodedInstructionExtraAttributes::IS_WIDE)
+            {
                 // Add word, byte depending on if the instruction is wide or not.
                 self.string_builder.push_str("word ");
             } else {
                 self.string_builder.push_str("byte ");
             }
+        }
+
+        if instruction
+            .extra_attributes
+            .contains(DecodedInstructionExtraAttributes::IS_INDIRECT_FAR_JUMP)
+        {
+            self.string_builder.push_str("far ");
         }
 
         self.print_operand(&instruction.operands.destination, instruction.size);

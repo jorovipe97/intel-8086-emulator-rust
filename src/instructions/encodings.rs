@@ -1102,6 +1102,12 @@ pub enum InstructionBitsUsage {
     /// This is an absolute address not an increment.
     IpIntersegment,
 
+    /// Some modes like the call indirect intersegment dont have a way to know
+    /// if we are intending a far jump, in those cases, we should use this.
+    ///
+    /// Eg asm: `call far [8]`
+    IndirectFarJump,
+
     // TODO: Can we remove it?
     /// Used to track how many possible bits usages we support, this is not an actual flag in 8086.
     Count,
