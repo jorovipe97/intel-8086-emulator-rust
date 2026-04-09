@@ -365,10 +365,24 @@ call 1234h:5678h
 ; Indirect intersegment (Far Jump)
 call far [8]
 
+; Direct within segment (Near Jump) (16 bits)
+jmp 130
+
+; Direct within segment (Short Jump) (8 bits)
+jmp short_jump_label
+short_jump_label:
+
+; Indirect within segment (Near Jump) (16 bits)
+jmp [39201]
+jmp [bp - 100]
+jmp sp
 jmp ax
-jmp di
-jmp [12]
-jmp [4395]
+
+; Direct intersegment (Far Jump)
+jmp 1234h:5678h
+
+; Indirect intersegment (Far Jump)
+jmp far [8]
 
 ret -7
 ret 500

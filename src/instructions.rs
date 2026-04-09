@@ -1895,6 +1895,105 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
+        op: OperationType::Jmp,
+        bits: &[
+            // Direct within segment, 16-bits ip increment (near)
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_1001,
+            },
+            // The BitsIpInc is to indicate that the destination operand is an Instruction Pointer Increment
+            // However the actual data is extracted from data.
+            IP_INC,
+            // Increment is always encoded in two bytes.
+            W_MAKES_DATA_WIDE,
+            implicit_w(1),
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Jmp,
+        bits: &[
+            // Direct within segment, 8-bits ip increment (short)
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_1011,
+            },
+            // The BitsIpInc is to indicate that the destination operand is an Instruction Pointer Increment
+            // However the actual data is extracted from data.
+            IP_INC,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Indirect within segment
+        op: OperationType::Jmp,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1111_1111,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b100,
+            },
+            RM,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Operand should always be 16 bits.
+            implicit_w(1),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Direct intersegment
+        op: OperationType::Jmp,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1110_1010,
+            },
+            IP_INTERSEGMENT,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Indirect intersegment
+        op: OperationType::Jmp,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1111_1111,
+            },
+            MOD,
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 3,
+                value: 0b101,
+            },
+            RM,
+            // Destination is in the mod operand.
+            implicit_d(0),
+            // Operand should always be 16 bits.
+            implicit_w(1),
+            INDIRECT_FAR_JUMP,
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

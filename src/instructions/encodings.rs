@@ -901,6 +901,9 @@ pub enum OperationType {
     /// To see how functions work: https://www.youtube.com/watch?v=7YyALikxAlU
     Call,
 
+    /// Unconditional Jump. Transfers control to another part of the program. 4-byte address may be entered in this form: 1234h:5678h, first value is a segment second value is an offset.
+    Jmp,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -1030,6 +1033,7 @@ impl Display for OperationType {
             Self::Scasb => write!(f, "scasb"),
             Self::Scasw => write!(f, "scasw"),
             Self::Call => write!(f, "call"),
+            Self::Jmp => write!(f, "jmp"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),
