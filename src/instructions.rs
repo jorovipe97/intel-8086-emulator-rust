@@ -1994,6 +1994,54 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         affected_cpu_flags: CpuFlags::empty(),
     },
     InstructionEncoding {
+        op: OperationType::Ret,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1100_0011,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Ret within segment adding immediate to SP.
+        op: OperationType::Ret,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1100_0010,
+            },
+            DATA,
+            W_MAKES_DATA_WIDE,
+            implicit_w(1), // Immediate is always encoded in 16 bits.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Retf,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1100_1011,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        // Ret intersegment adding immediate to SP.
+        op: OperationType::Retf,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1100_1010,
+            },
+            DATA,
+            W_MAKES_DATA_WIDE,
+            implicit_w(1), // Immediate is always encoded in 16 bits.
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
         op: OperationType::Jnz,
         bits: &[
             InstructionBits {

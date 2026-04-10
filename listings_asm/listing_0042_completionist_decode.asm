@@ -384,9 +384,12 @@ jmp 1234h:5678h
 ; Indirect intersegment (Far Jump)
 jmp far [8]
 
+ret
 ret -7
 ret 500
-ret
+retf
+retf -7
+retf 800
 
 label:
 je label

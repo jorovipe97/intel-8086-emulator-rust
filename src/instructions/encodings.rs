@@ -904,6 +904,26 @@ pub enum OperationType {
     /// Unconditional Jump. Transfers control to another part of the program. 4-byte address may be entered in this form: 1234h:5678h, first value is a segment second value is an offset.
     Jmp,
 
+    /// Return from CALL within segment
+    ///
+    /// Algorithm:
+    ///
+    /// Pop from stack:
+    ///     IP
+    /// if immediate operand is present:
+    ///     SP = SP + operand
+    Ret,
+
+    /// Return from CALL intersegment. Or Return from Far procedure.
+    ///
+    /// Algorithm:
+    ///
+    /// Pop from stack:
+    ///     IP
+    ///     CS
+    /// if immediate operand is present: SP = SP + operand
+    Retf,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -1034,6 +1054,8 @@ impl Display for OperationType {
             Self::Scasw => write!(f, "scasw"),
             Self::Call => write!(f, "call"),
             Self::Jmp => write!(f, "jmp"),
+            Self::Ret => write!(f, "ret"),
+            Self::Retf => write!(f, "retf"),
             Self::Je => write!(f, "je"),
             Self::Jl => write!(f, "jl"),
             Self::Jle => write!(f, "jle"),

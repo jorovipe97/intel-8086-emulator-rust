@@ -97,6 +97,8 @@ impl Disassembler {
             && instruction.operation != OperationType::Scasw
             && instruction.operation != OperationType::Call
             && instruction.operation != OperationType::Jmp
+            && instruction.operation != OperationType::Ret
+            && instruction.operation != OperationType::Retf
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

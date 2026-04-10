@@ -106,6 +106,8 @@ impl Cpu {
             OperationType::Scasw => todo!(),
             OperationType::Call => todo!(),
             OperationType::Jmp => todo!(),
+            OperationType::Ret => todo!(),
+            OperationType::Retf => todo!(),
             // All jump operations operate on the destination value.
             OperationType::Jb
             | OperationType::Jbe
