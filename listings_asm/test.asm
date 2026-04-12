@@ -1,6 +1,8 @@
 
 bits 16
 
-out 44, ax
-out dx, al
-out dx, ax
+int 13
+int3
+
+into
+iret

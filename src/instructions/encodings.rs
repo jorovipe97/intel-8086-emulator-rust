@@ -24,6 +24,9 @@ bitflags! {
         /// Actually this flag take the value of the most significant bit.
         const SF = 1 << 7;
 
+        /// Interrupt Flag (IF) - when this flag is set to 1 CPU reacts to interrupts from external devices.
+        const IF = 1 << 9;
+
         /// Direction Flag (DF) - this flag is used by some instructions like MOVSB, MOBSW to process data chains,
         /// when this flag is set to 0 - the processing is done forward,
         /// when this flag is set to 1 the processing is done backward.
@@ -924,6 +927,48 @@ pub enum OperationType {
     /// if immediate operand is present: SP = SP + operand
     Retf,
 
+    /// Interrupt numbered by immediate byte (0..255).
+    ///
+    /// Algorithm:
+    ///
+    /// Push to stack:
+    ///   flags register
+    /// CS
+    /// IP
+    /// IF = 0 (Interrupt Flag so no hardware interrupts enter during this software interrupt invocation)
+    /// Transfer control to interrupt procedure
+    Int,
+
+    /// Interruption usually used to mark breakpoints in debugging.
+    Int3,
+
+    /// Interrupt 4 if Overflow flag is 1.
+    ///
+    /// Algorithm:
+    ///
+    /// if OF = 1 then INT 4
+    ///
+    /// Example:
+    /// ; -5 - 127 = -132 (not in -128..127)
+    /// ; the result of SUB is wrong (124),
+    /// ; so OF = 1 is set:
+    /// MOV AL, -5
+    /// SUB AL, 127   ; AL = 7Ch (124)
+    /// INTO          ; process error.
+    IntO,
+
+    /// Interrupt Return.
+    ///
+    /// Algorithm:
+    ///
+    /// Pop from stack:
+    /// IP
+    /// CS
+    /// flags register
+    ///
+    /// Pops flags.
+    Iret,
+
     /// Jump if Not Zero (Not Equal).
     Jnz,
     /// Jump if Zero (Equal).
@@ -1076,6 +1121,10 @@ impl Display for OperationType {
             Self::LoopZ => write!(f, "loopz"),
             Self::LoopNz => write!(f, "loopnz"),
             Self::Jcxz => write!(f, "jcxz"),
+            Self::Int => write!(f, "int"),
+            Self::Int3 => write!(f, "int3"),
+            Self::IntO => write!(f, "into"),
+            Self::Iret => write!(f, "iret"),
         }
     }
 }

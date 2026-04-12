@@ -130,6 +130,10 @@ impl Cpu {
             | OperationType::Loop
             | OperationType::LoopNz
             | OperationType::LoopZ => destination_value,
+            OperationType::Int => todo!(),
+            OperationType::Int3 => todo!(),
+            OperationType::IntO => todo!(),
+            OperationType::Iret => todo!(),
         };
 
         // Computes flags

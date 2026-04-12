@@ -2342,6 +2342,47 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         ],
         affected_cpu_flags: CpuFlags::empty(),
     },
+    InstructionEncoding {
+        op: OperationType::Int,
+        bits: &[
+            InstructionBits {
+                usage: InstructionBitsUsage::Literal,
+                bit_count: 8,
+                value: 0b1100_1101,
+            },
+            DATA,
+            // Destination is in the mod operand.
+            implicit_d(0),
+        ],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Int3,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1100_1100,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::IntO,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1100_1110,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Iret,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1100_1111,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
 ];
 
 /// NOTE(casey): This is the "Intel-specified" maximum length of an instruction, including prefixes\
