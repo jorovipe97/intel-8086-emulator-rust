@@ -2383,6 +2383,87 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
         }],
         affected_cpu_flags: CpuFlags::empty(),
     },
+    InstructionEncoding {
+        op: OperationType::Clc,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1000,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cmc,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_0101,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Stc,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1001,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cld,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1100,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Std,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1101,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Cli,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1010,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Sti,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_1011,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Hlt,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_0100,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Wait,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1001_1011,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
 ];
 
 /// NOTE(casey): This is the "Intel-specified" maximum length of an instruction, including prefixes\

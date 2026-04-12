@@ -103,6 +103,15 @@ impl Disassembler {
             && instruction.operation != OperationType::Int3
             && instruction.operation != OperationType::IntO
             && instruction.operation != OperationType::Iret
+            && instruction.operation != OperationType::Clc
+            && instruction.operation != OperationType::Cmc
+            && instruction.operation != OperationType::Stc
+            && instruction.operation != OperationType::Cld
+            && instruction.operation != OperationType::Std
+            && instruction.operation != OperationType::Cli
+            && instruction.operation != OperationType::Sti
+            && instruction.operation != OperationType::Hlt
+            && instruction.operation != OperationType::Wait
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

@@ -134,6 +134,15 @@ impl Cpu {
             OperationType::Int3 => todo!(),
             OperationType::IntO => todo!(),
             OperationType::Iret => todo!(),
+            OperationType::Clc => todo!(),
+            OperationType::Cmc => todo!(),
+            OperationType::Stc => todo!(),
+            OperationType::Cld => todo!(),
+            OperationType::Std => todo!(),
+            OperationType::Cli => todo!(),
+            OperationType::Sti => todo!(),
+            OperationType::Hlt => todo!(),
+            OperationType::Wait => todo!(),
         };
 
         // Computes flags

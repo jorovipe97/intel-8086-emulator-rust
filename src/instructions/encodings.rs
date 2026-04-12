@@ -1019,6 +1019,35 @@ pub enum OperationType {
     LoopNz,
     /// Jump on CX zero
     Jcxz,
+
+    /// Clear Carry flag.
+    Clc,
+
+    /// Complement Carry flag. Inverts value of CF.
+    Cmc,
+
+    /// Set Carry flag.
+    Stc,
+
+    /// Clear direction flag.
+    Cld,
+
+    /// Set direction.
+    Std,
+
+    /// Clear interrupt flag.
+    Cli,
+
+    /// Set interruption flag.
+    Sti,
+
+    /// Halt - stops instruction fetching and execution,
+    /// placing the CPU in an idle, low-power state.
+    /// It is used to pause the processor until an external interrupt
+    Hlt,
+
+    /// Wait -
+    Wait,
 }
 
 impl OperationType {
@@ -1125,6 +1154,15 @@ impl Display for OperationType {
             Self::Int3 => write!(f, "int3"),
             Self::IntO => write!(f, "into"),
             Self::Iret => write!(f, "iret"),
+            Self::Clc => write!(f, "clc"),
+            Self::Cmc => write!(f, "cmc"),
+            Self::Stc => write!(f, "stc"),
+            Self::Cld => write!(f, "cld"),
+            Self::Std => write!(f, "std"),
+            Self::Cli => write!(f, "cli"),
+            Self::Sti => write!(f, "sti"),
+            Self::Hlt => write!(f, "hlt"),
+            Self::Wait => write!(f, "wait"),
         }
     }
 }
