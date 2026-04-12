@@ -1046,8 +1046,28 @@ pub enum OperationType {
     /// It is used to pause the processor until an external interrupt
     Hlt,
 
-    /// Wait -
+    /// Wait - pauses processor execution until the external TEST pin is sampled as logic LOW.
     Wait,
+
+    /// Prefix used to assert the LOCK# signal pin for the duration of
+    /// the subsequent instruction. It ensures atomicity in multiprocessor
+    /// systems by preventing other bus masters from gaining control
+    /// of the system bus. It is primarily used to secure shared memory
+    /// resources during read-modify-write operations.
+    ///
+    /// Why did the 8086 have the LOCK prefix? I think of it as being mostly useful in parallel contexts,
+    /// e.g. lock cmpxchg for an atomic compare and swap.
+    /// But the 8086 was a single core, single thread processor, and I'd be surprised if it were used in multiprocessor machines.
+    /// Oh! did it have anything to do with the 8087? 8087 as a co-processor used to perform math computations.
+    ///
+    /// Also, the lock prefix is handy for interrupt safe ops without wholesale disabling interrupts.
+    ///
+    /// The processor also was designed to have SMP (Symetric Multiprocesor) configurations.
+    /// Intel even had their own bus for this called Multibus. The processor lock signal
+    /// was connected to the Multibus so that a bus master could lock another boards shared
+    /// memory for an atomic access.
+    /// https://news.ycombinator.com/item?id=35939168
+    Lock,
 }
 
 impl OperationType {
@@ -1056,7 +1076,7 @@ impl OperationType {
     /// Returns true if the operation is a prefix.
     pub fn is_prefix(&self) -> bool {
         match self {
-            Self::Rep | Self::Repe | Self::Repne => true,
+            Self::Rep | Self::Repe | Self::Repne | Self::Lock => true,
             _ => false,
         }
     }
@@ -1163,6 +1183,7 @@ impl Display for OperationType {
             Self::Sti => write!(f, "sti"),
             Self::Hlt => write!(f, "hlt"),
             Self::Wait => write!(f, "wait"),
+            Self::Lock => write!(f, "lock"),
         }
     }
 }

@@ -143,6 +143,7 @@ impl Cpu {
             OperationType::Sti => todo!(),
             OperationType::Hlt => todo!(),
             OperationType::Wait => todo!(),
+            OperationType::Lock => todo!(),
         };
 
         // Computes flags

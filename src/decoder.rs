@@ -100,6 +100,7 @@ impl<'a> Decoder<'a> {
                     ));
                 }
             },
+            OperationType::Lock => result.prefix = OperationType::Lock,
             _ => (),
         }
 
