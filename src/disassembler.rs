@@ -28,11 +28,19 @@ impl Disassembler {
 
     /// Receives a DecodedInstruction and prints its ASM representation.
     pub fn add_instruction(&mut self, instruction: &DecodedInstruction) {
-        // If has prefix, print it
-        if instruction.prefix != OperationType::None {
-            self.string_builder
-                .push_str(&instruction.prefix.to_string());
-            self.string_builder.push(' ');
+        // If has prefixes, print them. We need to check if prefixes_count is bigger
+        // than 0, because if a fixed stack array of 2 elements. We want to avoid the
+        // unnecesary iterations to check if there is some prefix not none.
+        if instruction.prefixes_count > 0 {
+            for prefix in instruction.prefixes {
+                if prefix == OperationType::None {
+                    // If prefix is none, just ignore it.
+                    continue;
+                }
+
+                self.string_builder.push_str(&prefix.to_string());
+                self.string_builder.push(' ');
+            }
         }
 
         // Print the mnemonic name.

@@ -8,6 +8,13 @@ use std::env;
 // Instructions encoding table is around page 256 of the 8086 user's manual.
 // 8086 nice tutorial: https://yassinebridi.github.io/asm-docs/
 // 8086 cool simulator: https://yjdoc2.github.io/8086-emulator-web/compile
+//
+// An Engineer did reverse enginerring of the 8086
+// https://www.righto.com/2023/05/8086-processor-group-decode-rom.html
+// https://news.ycombinator.com/item?id=35939168
+//
+// How 8086 microcode works:
+// https://www.righto.com/2022/11/how-8086-processors-microcode-engine.html
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();

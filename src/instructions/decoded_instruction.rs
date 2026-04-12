@@ -21,7 +21,13 @@ bitflags! {
 /// Holds the information of an instruction after decoding from binary.
 #[derive(Debug, Clone, Copy)]
 pub struct DecodedInstruction {
-    pub prefix: OperationType,
+    /// The prefixes of the decoded instruction, note that a given instruction
+    /// may have multiple prefixes, ex lock cs mov ax, [bx]
+    /// Prefixes are in a stack-allocated array because we know we may have up to 2 prefixes.
+    pub prefixes: [OperationType; 2],
+
+    /// Count of prefixes in the decoded instruciton.
+    pub prefixes_count: usize,
     pub operation: OperationType,
 
     /// Size of the instruction in bytes.
@@ -39,7 +45,8 @@ pub struct DecodedInstruction {
 
 impl DecodedInstruction {
     pub const DEFAULT: Self = Self {
-        prefix: OperationType::None,
+        prefixes: [OperationType::None; 2],
+        prefixes_count: 0,
         operation: OperationType::None,
         size: 0,
         operands: OperandsUsage {

@@ -170,18 +170,6 @@ const ARITHMETIC_AND_LOGIC_FLAGS: CpuFlags = CpuFlags::from_bits_truncate(
 /// This table hold the encodings of all the instructions suported by this
 /// emulator.
 pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
-    // This prefix should be in the beginning because can be applied to almost any instruction
-    // If instruction is a prefix, decoder tries next candidate in INSTRUCTION_ENCODINGS_TABLE.
-    // it do not check all items from the beginning, Because of this we just move the candidate to the beginning.
-    InstructionEncoding {
-        op: OperationType::Lock,
-        bits: &[InstructionBits {
-            usage: InstructionBitsUsage::Literal,
-            bit_count: 8,
-            value: 0b1111_0000,
-        }],
-        affected_cpu_flags: CpuFlags::empty(),
-    },
     InstructionEncoding {
         op: OperationType::Mov,
         bits: &[
@@ -2473,6 +2461,51 @@ pub const INSTRUCTION_ENCODINGS_TABLE: &[InstructionEncoding] = &[
             usage: InstructionBitsUsage::Literal,
             bit_count: 8,
             value: 0b1001_1011,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::Lock,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b1111_0000,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::ESOverride,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b001_00_110,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::CSOverride,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b001_01_110,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::SSOverride,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b001_10_110,
+        }],
+        affected_cpu_flags: CpuFlags::empty(),
+    },
+    InstructionEncoding {
+        op: OperationType::DSOverride,
+        bits: &[InstructionBits {
+            usage: InstructionBitsUsage::Literal,
+            bit_count: 8,
+            value: 0b001_11_110,
         }],
         affected_cpu_flags: CpuFlags::empty(),
     },

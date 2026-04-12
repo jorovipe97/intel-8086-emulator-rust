@@ -1068,6 +1068,11 @@ pub enum OperationType {
     /// memory for an atomic access.
     /// https://news.ycombinator.com/item?id=35939168
     Lock,
+
+    ESOverride,
+    CSOverride,
+    SSOverride,
+    DSOverride,
 }
 
 impl OperationType {
@@ -1076,7 +1081,14 @@ impl OperationType {
     /// Returns true if the operation is a prefix.
     pub fn is_prefix(&self) -> bool {
         match self {
-            Self::Rep | Self::Repe | Self::Repne | Self::Lock => true,
+            Self::Rep
+            | Self::Repe
+            | Self::Repne
+            | Self::Lock
+            | Self::ESOverride
+            | Self::CSOverride
+            | Self::SSOverride
+            | Self::DSOverride => true,
             _ => false,
         }
     }
@@ -1184,6 +1196,10 @@ impl Display for OperationType {
             Self::Hlt => write!(f, "hlt"),
             Self::Wait => write!(f, "wait"),
             Self::Lock => write!(f, "lock"),
+            Self::ESOverride => write!(f, "es"),
+            Self::DSOverride => write!(f, "ds"),
+            Self::SSOverride => write!(f, "ss"),
+            Self::CSOverride => write!(f, "cs"),
         }
     }
 }

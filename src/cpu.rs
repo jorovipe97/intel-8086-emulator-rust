@@ -144,6 +144,10 @@ impl Cpu {
             OperationType::Hlt => todo!(),
             OperationType::Wait => todo!(),
             OperationType::Lock => todo!(),
+            OperationType::ESOverride => todo!(),
+            OperationType::DSOverride => todo!(),
+            OperationType::SSOverride => todo!(),
+            OperationType::CSOverride => todo!(),
         };
 
         // Computes flags

@@ -13,6 +13,13 @@ use anyhow::Context;
 use anyhow::Result;
 use anyhow::anyhow;
 
+/// The possible states for the decoder's state machine.
+enum DecoderStates {
+    FetchAndDecode,
+    PrefixInstruction,
+    DecodingComplete,
+}
+
 pub struct Decoder<'a> {
     memory: &'a Memory,
 }
@@ -32,23 +39,104 @@ impl<'a> Decoder<'a> {
         let mut result = DecodedInstruction::DEFAULT;
         let mut next_memory_address = memory_access;
         let mut prefix_operation = OperationType::None;
+        let mut state = DecoderStates::FetchAndDecode;
+        let mut prefixes_count = 0;
+        let mut prefixes = [OperationType::None; 2];
 
-        // Compares current byte location with all the instruction encodings in INSTRUCTIONS_TABLE constant.
-        for candidate_encoding in INSTRUCTION_ENCODINGS_TABLE {
-            (result, next_memory_address) =
-                self.try_decode(candidate_encoding, next_memory_address)?;
+        'state_machine: loop {
+            match state {
+                DecoderStates::FetchAndDecode => {
+                    // Compares current byte location with all the instruction encodings in INSTRUCTIONS_TABLE constant.
+                    for candidate_encoding in INSTRUCTION_ENCODINGS_TABLE {
+                        (result, next_memory_address) =
+                            self.try_decode(candidate_encoding, next_memory_address)?;
 
-            // If instruction is a prefix, extract it and get next instruction.
-            if result.operation.is_prefix() {
-                prefix_operation = result.operation;
-                // Get next instruction.
-                continue;
+                        // If instruction is a prefix, extract it and get next instruction.
+                        if result.operation.is_prefix() {
+                            prefix_operation = result.operation;
+                            state = DecoderStates::PrefixInstruction;
+                            continue 'state_machine;
+                        }
+
+                        if result.operation != OperationType::None {
+                            state = DecoderStates::DecodingComplete;
+                            // We were able to decode the instruction, no need to keep looking for candidates.
+                            continue 'state_machine;
+                        }
+                    }
+                }
+                DecoderStates::PrefixInstruction => {
+                    if prefixes_count >= 2 {
+                        return Err(anyhow!(
+                            "instruction can only have up to 2 prefixes, we do not support cases with more prefixes"
+                        ));
+                    }
+
+                    // Compute prefix
+                    match prefix_operation {
+                        OperationType::Rep => {
+                            // If instruction after prefix is MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW
+                            // then, prefix is rep.
+                            //
+                            // If instruction after prefix is CMPSB, CMPSW, SCASB, SCASW,
+                            // then, prefix is repe.
+                            //
+                            // Note that both prefix instructions have the same opcode, the difference
+                            // depends on the instruction after the prefix.
+                            match result.operation {
+                                OperationType::Movsb
+                                | OperationType::Movsw
+                                | OperationType::Lodsb
+                                | OperationType::Lodsw
+                                | OperationType::Stosb
+                                | OperationType::Stosw => {
+                                    prefixes[prefixes_count] = OperationType::Rep
+                                }
+                                OperationType::Cmpsb
+                                | OperationType::Cmpsw
+                                | OperationType::Scasb
+                                | OperationType::Scasw => {
+                                    prefixes[prefixes_count] = OperationType::Repe
+                                }
+                                invalid_operation => {
+                                    return Err(anyhow!(
+                                        "operation {invalid_operation} cannot be prefixed with rep"
+                                    ));
+                                }
+                            }
+                        }
+                        OperationType::Repne => match result.operation {
+                            OperationType::Cmpsb
+                            | OperationType::Cmpsw
+                            | OperationType::Scasb
+                            | OperationType::Scasw => {
+                                prefixes[prefixes_count] = OperationType::Repne
+                            }
+                            invalid_operation => {
+                                return Err(anyhow!(
+                                    "operation {invalid_operation} cannot be prefixed with repne"
+                                ));
+                            }
+                        },
+                        other_prefixes => match other_prefixes {
+                            OperationType::None => (),
+                            _ => prefixes[prefixes_count] = prefix_operation,
+                        },
+                    }
+
+                    prefixes_count += 1;
+                    // Continue fetching and decoding instructions.
+                    state = DecoderStates::FetchAndDecode;
+                    continue 'state_machine;
+                }
+                DecoderStates::DecodingComplete => {
+                    result.prefixes = prefixes;
+                    result.prefixes_count = prefixes_count;
+                    // Exit state machine.
+                    break 'state_machine;
+                }
             }
-
-            if result.operation != OperationType::None {
-                // We were able to decode the instruction, no need to keep looking for candidates.
-                break;
-            }
+            break;
         }
 
         // If could not decode using any of the candidate encodings in INSTRUCTION_ENCODINGS_TABLE
@@ -58,50 +146,6 @@ impl<'a> Decoder<'a> {
                 "instruction is unknown, at position {}",
                 next_memory_address.absolute_address()
             ));
-        }
-
-        // Compute prefix
-        match prefix_operation {
-            OperationType::Rep => {
-                // If instruction after prefix is MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW
-                // then, prefix is rep.
-                //
-                // If instruction after prefix is CMPSB, CMPSW, SCASB, SCASW,
-                // then, prefix is repe.
-                //
-                // Note that both prefix instructions have the same opcode, the difference
-                // depends on the instruction after the prefix.
-                match result.operation {
-                    OperationType::Movsb
-                    | OperationType::Movsw
-                    | OperationType::Lodsb
-                    | OperationType::Lodsw
-                    | OperationType::Stosb
-                    | OperationType::Stosw => result.prefix = OperationType::Rep,
-                    OperationType::Cmpsb
-                    | OperationType::Cmpsw
-                    | OperationType::Scasb
-                    | OperationType::Scasw => result.prefix = OperationType::Repe,
-                    invalid_operation => {
-                        return Err(anyhow!(
-                            "operation {invalid_operation} cannot be prefixed with rep"
-                        ));
-                    }
-                }
-            }
-            OperationType::Repne => match result.operation {
-                OperationType::Cmpsb
-                | OperationType::Cmpsw
-                | OperationType::Scasb
-                | OperationType::Scasw => result.prefix = OperationType::Repne,
-                invalid_operation => {
-                    return Err(anyhow!(
-                        "operation {invalid_operation} cannot be prefixed with repne"
-                    ));
-                }
-            },
-            OperationType::Lock => result.prefix = OperationType::Lock,
-            _ => (),
         }
 
         Ok((result, next_memory_address))
