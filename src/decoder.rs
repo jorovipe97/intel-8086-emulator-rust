@@ -74,54 +74,8 @@ impl<'a> Decoder<'a> {
 
                     // Compute prefix
                     match prefix_operation {
-                        OperationType::Rep => {
-                            // If instruction after prefix is MOVSB, MOVSW, LODSB, LODSW, STOSB, STOSW
-                            // then, prefix is rep.
-                            //
-                            // If instruction after prefix is CMPSB, CMPSW, SCASB, SCASW,
-                            // then, prefix is repe.
-                            //
-                            // Note that both prefix instructions have the same opcode, the difference
-                            // depends on the instruction after the prefix.
-                            match result.operation {
-                                OperationType::Movsb
-                                | OperationType::Movsw
-                                | OperationType::Lodsb
-                                | OperationType::Lodsw
-                                | OperationType::Stosb
-                                | OperationType::Stosw => {
-                                    prefixes[prefixes_count] = OperationType::Rep
-                                }
-                                OperationType::Cmpsb
-                                | OperationType::Cmpsw
-                                | OperationType::Scasb
-                                | OperationType::Scasw => {
-                                    prefixes[prefixes_count] = OperationType::Repe
-                                }
-                                invalid_operation => {
-                                    return Err(anyhow!(
-                                        "operation {invalid_operation} cannot be prefixed with rep"
-                                    ));
-                                }
-                            }
-                        }
-                        OperationType::Repne => match result.operation {
-                            OperationType::Cmpsb
-                            | OperationType::Cmpsw
-                            | OperationType::Scasb
-                            | OperationType::Scasw => {
-                                prefixes[prefixes_count] = OperationType::Repne
-                            }
-                            invalid_operation => {
-                                return Err(anyhow!(
-                                    "operation {invalid_operation} cannot be prefixed with repne"
-                                ));
-                            }
-                        },
-                        other_prefixes => match other_prefixes {
-                            OperationType::None => (),
-                            _ => prefixes[prefixes_count] = prefix_operation,
-                        },
+                        OperationType::None => return Err(anyhow!("cannot prefix using None.")),
+                        _ => prefixes[prefixes_count] = prefix_operation,
                     }
 
                     prefixes_count += 1;
@@ -130,6 +84,43 @@ impl<'a> Decoder<'a> {
                     continue 'state_machine;
                 }
                 DecoderStates::DecodingComplete => {
+                    // Validates rep and repne prefix is applied to valid instruction.
+                    for prefix in prefixes.iter_mut() {
+                        if let OperationType::Rep = prefix {
+                            match result.operation {
+                                OperationType::Movsb
+                                | OperationType::Movsw
+                                | OperationType::Lodsb
+                                | OperationType::Lodsw
+                                | OperationType::Stosb
+                                | OperationType::Stosw => *prefix = OperationType::Rep,
+                                OperationType::Cmpsb
+                                | OperationType::Cmpsw
+                                | OperationType::Scasb
+                                | OperationType::Scasw => *prefix = OperationType::Repe,
+                                _ => {
+                                    return Err(anyhow!(
+                                        "cannot use rep prefix with {}",
+                                        result.operation
+                                    ));
+                                }
+                            }
+                        } else if let OperationType::Repne = prefix {
+                            match result.operation {
+                                OperationType::Cmpsb
+                                | OperationType::Cmpsw
+                                | OperationType::Scasb
+                                | OperationType::Scasw => (), // valid
+                                _ => {
+                                    return Err(anyhow!(
+                                        "cannot use repne prefix with {}",
+                                        result.operation
+                                    ));
+                                }
+                            }
+                        }
+                    }
+
                     result.prefixes = prefixes;
                     result.prefixes_count = prefixes_count;
                     // Exit state machine.

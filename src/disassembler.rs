@@ -120,6 +120,7 @@ impl Disassembler {
             && instruction.operation != OperationType::Sti
             && instruction.operation != OperationType::Hlt
             && instruction.operation != OperationType::Wait
+            && instruction.operation != OperationType::Xlat
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

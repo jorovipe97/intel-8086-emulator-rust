@@ -1,4 +1,4 @@
-file := "listings_asm/test"
+file := "listings_asm/listing_0042_completionist_decode"
 
 run:
     @echo "Assembling original file..."
