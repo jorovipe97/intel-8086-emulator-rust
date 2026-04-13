@@ -59,8 +59,7 @@ impl Disassembler {
         //
         // If destination or source is not register or a instruction pointer increment do not add size of destination.
         if !matches!(instruction.operands.destination, Operand::Register(_))
-            && !(
-                matches!(instruction.operands.source, Operand::Register(_))
+            && !(matches!(instruction.operands.source, Operand::Register(_))
                 // On this instruction altough source operand may be the cl register it does not mean
                 // we are operatying on 8 byte, since destination can be a memory location
                 // and the source operand means how many bits to shift.
@@ -70,8 +69,7 @@ impl Disassembler {
                 && instruction.operation != OperationType::Rol
                 && instruction.operation != OperationType::Ror
                 && instruction.operation != OperationType::Rcl
-                && instruction.operation != OperationType::Rcr
-            )
+                && instruction.operation != OperationType::Rcr)
             && !matches!(
                 instruction.operands.destination,
                 Operand::InstructionPointerIncrement(_)
@@ -81,46 +79,9 @@ impl Disassembler {
                 instruction.operands.destination,
                 Operand::SegmentRegister(_)
             )
-            && instruction.operation != OperationType::Lahf // TODO: Configure this from the instructions table
-            && instruction.operation != OperationType::Sahf
-            && instruction.operation != OperationType::Pushf
-            && instruction.operation != OperationType::Popf
-            && instruction.operation != OperationType::Aaa
-            && instruction.operation != OperationType::Daa
-            && instruction.operation != OperationType::Aas
-            && instruction.operation != OperationType::Das
-            && instruction.operation != OperationType::Aam
-            && instruction.operation != OperationType::Aad
-            && instruction.operation != OperationType::Cbw
-            && instruction.operation != OperationType::Cwd
-            && instruction.operation != OperationType::Movsb
-            && instruction.operation != OperationType::Movsw
-            && instruction.operation != OperationType::Lodsb
-            && instruction.operation != OperationType::Lodsw
-            && instruction.operation != OperationType::Stosb
-            && instruction.operation != OperationType::Stosw
-            && instruction.operation != OperationType::Cmpsb
-            && instruction.operation != OperationType::Cmpsw
-            && instruction.operation != OperationType::Scasb
-            && instruction.operation != OperationType::Scasw
-            && instruction.operation != OperationType::Call
-            && instruction.operation != OperationType::Jmp
-            && instruction.operation != OperationType::Ret
-            && instruction.operation != OperationType::Retf
-            && instruction.operation != OperationType::Int
-            && instruction.operation != OperationType::Int3
-            && instruction.operation != OperationType::IntO
-            && instruction.operation != OperationType::Iret
-            && instruction.operation != OperationType::Clc
-            && instruction.operation != OperationType::Cmc
-            && instruction.operation != OperationType::Stc
-            && instruction.operation != OperationType::Cld
-            && instruction.operation != OperationType::Std
-            && instruction.operation != OperationType::Cli
-            && instruction.operation != OperationType::Sti
-            && instruction.operation != OperationType::Hlt
-            && instruction.operation != OperationType::Wait
-            && instruction.operation != OperationType::Xlat
+            && instruction
+                .extra_attributes
+                .contains(DecodedInstructionExtraAttributes::HAS_EFFECTIVE_ADDRESS_CALCULATION)
         {
             // Push instruction only support 16 bits (word) operands
             if instruction.operation == OperationType::Push

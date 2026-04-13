@@ -319,6 +319,8 @@ impl<'a> Decoder<'a> {
                 // R/M identifies the second register operand.
                 mod_operand = self.get_reg_operand(rm, mod_register_w)?
             } else {
+                result.extra_attributes |=
+                    DecodedInstructionExtraAttributes::HAS_EFFECTIVE_ADDRESS_CALCULATION;
                 let displacement = bits_parts[InstructionBitsUsage::Disp as usize];
                 mod_operand = self.get_memory_operand(mod_field, rm, displacement)?;
             }

@@ -277,20 +277,20 @@ repne scasb
 repne cmpsw 
 repne scasw 
 call $+3+-3
-call [+-26335]
-call [bp+-100]
+call word [+-26335]
+call word [bp+-100]
 call sp
 call ax
 call 4660:22136
-call far [+8]
+call word far [+8]
 jmp $+3+-612
 jmp $+2+0
-jmp [+-26335]
-jmp [bp+-100]
+jmp word [+-26335]
+jmp word [bp+-100]
 jmp sp
 jmp ax
 jmp 4660:22136
-jmp far [+8]
+jmp word far [+8]
 ret 
 ret -7
 ret 500
@@ -352,8 +352,8 @@ retf 17556
 ret 17560
 retf 
 ret 
-call [bp+si+-58]
-call far [bp+si+-58]
-jmp [di]
-jmp far [di]
+call word [bp+si+-58]
+call word far [bp+si+-58]
+jmp word [di]
+jmp word far [di]
 jmp 21862:30600

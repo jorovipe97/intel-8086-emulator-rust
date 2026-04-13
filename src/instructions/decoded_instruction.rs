@@ -15,6 +15,9 @@ bitflags! {
     pub struct DecodedInstructionExtraAttributes: u32 {
         const IS_WIDE = 1 << 0;
         const IS_INDIRECT_FAR_JUMP = 1 << 1;
+
+        /// The decoded instruction has memory operands eg: [bp + 2]
+        const HAS_EFFECTIVE_ADDRESS_CALCULATION = 1 << 2;
     }
 }
 
