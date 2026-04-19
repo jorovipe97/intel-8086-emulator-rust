@@ -1,14 +1,14 @@
 use std::fmt::Display;
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 
 use crate::{
     instructions::{
         decoded_instruction::{DecodedInstruction, DecodedInstructionExtraAttributes},
         encodings::{CpuFlags, OperationType, RegisterName},
-        operands::{Operand, SegmentRegisterName},
+        operands::{MemoryDisplacementInfo, Operand, RegisterInfo, SegmentRegisterName},
     },
-    memory::MemoryAccess,
+    memory::{Memory, MemoryAccess},
 };
 
 pub struct Cpu {
@@ -36,13 +36,18 @@ impl Cpu {
     pub fn execute_instruction(
         &mut self,
         instruction: DecodedInstruction,
-        memory_access: MemoryAccess,
+        memory: &mut Memory,
+        ip_memory_access: MemoryAccess,
     ) -> Result<MemoryAccess> {
         // Update internal instruction pointer to the value where decoded left it after
         // decoding the instruction.
-        self.instruction_pointer = memory_access.instruction_pointer;
-        let destination_value = self.get_operand_value(instruction.operands.destination)?;
-        let source_value = self.get_operand_value(instruction.operands.source)?;
+        self.instruction_pointer = ip_memory_access.offset;
+        let is_wide = instruction
+            .extra_attributes
+            .contains(DecodedInstructionExtraAttributes::IS_WIDE);
+        let destination_value =
+            self.get_operand_value(instruction.operands.destination, memory, is_wide)?;
+        let source_value = self.get_operand_value(instruction.operands.source, memory, is_wide)?;
 
         let final_value: u16 = match instruction.operation {
             OperationType::None => 0,
@@ -162,10 +167,10 @@ impl Cpu {
         // operand, just affects flags, this instruction is usually used to control the program
         // execution flow.
         if let OperationType::Cmp = instruction.operation {
-            return Ok(memory_access);
+            return Ok(ip_memory_access);
         }
         if let OperationType::Test = instruction.operation {
-            return Ok(memory_access);
+            return Ok(ip_memory_access);
         }
 
         // Updates simulated memory. Destination can be a register or memory.
@@ -178,8 +183,17 @@ impl Cpu {
                     "you cannot have an immediate as destination operand"
                 ));
             }
-            Operand::Memory(_) => {
-                return Err(anyhow!("destination memory operand is not supported yet"));
+            Operand::Memory(mem_operand) => {
+                let mem_effective_address = self.calculate_memory_effective_address(mem_operand)?;
+                if is_wide {
+                    memory
+                        .store_word(mem_effective_address, final_value)
+                        .with_context(|| "error while storing word to memory")?;
+                } else {
+                    memory
+                        .store_byte(mem_effective_address, final_value as u8)
+                        .with_context(|| "error while storing byte to memory")?;
+                }
             }
             Operand::Register(reg) => {
                 // TODO: Move to RegisterName function.
@@ -217,42 +231,88 @@ impl Cpu {
         }
 
         Ok(MemoryAccess {
-            instruction_pointer: self.instruction_pointer,
-            code_segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
+            offset: self.instruction_pointer,
+            segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
         })
     }
 
-    fn get_operand_value(&self, operand: Operand) -> Result<u16> {
+    // This is a separated method as it needs to be used to resolve registers and memory accesses.
+    fn get_value_in_register(&self, register: RegisterInfo) -> Result<u16> {
+        // Get the index of the register using register name enum's value.
+        // TODO: Create to index method on the enum to get a usize.
+        let reg_index = register.register_name as usize;
+        if reg_index > 8 {
+            return Err(anyhow!("register name in instruction is invalid"));
+        }
+
+        // If is a byte operand, eg: al, bl, cl, dl, ah, bh, ch, dh
+        // then we need to write the appropiate part of the register
+        if register.count == 1 {
+            // This is used to remove the part of the register we are not interested in.
+            let mask: u16 = 0b00000000_11111111;
+            let right_shift: u16 = (register.offset as u16) * 8;
+            return Ok((self.registers[reg_index] >> right_shift) & mask);
+        }
+
+        // If reaches here we are in a word operand, eg: ax, bx, cx, dx
+        Ok(self.registers[reg_index])
+    }
+
+    fn calculate_memory_effective_address(
+        &self,
+        mem_operand: MemoryDisplacementInfo,
+    ) -> Result<MemoryAccess> {
+        // We just always use segment 0, we do not really support segmenting access
+        // If I decide to support it in the future, we would need to check the register
+        // in offset and then look for the default segment, or see if is using a segment override prefix.
+        let segment = 0;
+
+        let mut offset = mem_operand.displacement as usize;
+
+        for term in mem_operand.terms {
+            if term.register_name == RegisterName::None {
+                continue;
+            }
+
+            offset += self
+                .get_value_in_register(term)
+                .with_context(|| "cannot get value in register for address calculation")?
+                as usize;
+        }
+
+        Ok(MemoryAccess { segment, offset })
+    }
+
+    fn get_operand_value(
+        &self,
+        operand: Operand,
+        memory: &mut Memory,
+        is_word: bool,
+    ) -> Result<u16> {
         match operand {
             Operand::None => Ok(0), // Zero value, this is a no-op
             Operand::SegmentRegister(segment_register) => {
                 Ok(self.segment_registers[segment_register.to_index()])
             }
             Operand::Immediate(v) => Ok(v as u16),
-            Operand::Register(reg) => {
-                // Get the index of the register using register name enum's value.
-                // TODO: Create to index method on the enum to get a usize.
-                let reg_index = reg.register_name as usize;
-                if reg_index > 8 {
-                    return Err(anyhow!("register name in insntruction is invalid"));
-                }
-
-                // If is a byte operand, eg: al, bl, cl, dl, ah, bh, ch, dh
-                // then we need to write the appropiate part of the register
-                if reg.count == 1 {
-                    // This is used to remove the part of the register we are not interested in.
-                    let mask: u16 = 0b00000000_11111111;
-                    let right_shift: u16 = (reg.offset as u16) * 8;
-                    return Ok((self.registers[reg_index] >> right_shift) & mask);
-                }
-
-                // If reaches here we are in a word operand, eg: ax, bx, cx, dx
-                Ok(self.registers[reg_index])
-            }
+            Operand::Register(reg) => self.get_value_in_register(reg),
             Operand::InstructionPointerIncrement(ip_inc) => Ok(ip_inc as u16),
             Operand::InstructionPointerIntersegment(_) => todo!(),
             // TODO: How are we going to do an immutable borrow to the memory?
-            Operand::Memory(_) => Err(anyhow!("simulator still not supports memory operands")),
+            Operand::Memory(mem_operand) => {
+                let memory_access = self.calculate_memory_effective_address(mem_operand)?;
+
+                if is_word {
+                    return memory
+                        .load_word(memory_access)
+                        .with_context(|| "cannot load memory during simulation");
+                } else {
+                    let data = memory
+                        .load_byte(memory_access)
+                        .with_context(|| "cannot load memory during simulation")?;
+                    return Ok(data as u16);
+                }
+            }
         }
     }
 

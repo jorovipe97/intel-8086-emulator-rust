@@ -182,11 +182,11 @@ impl<'a> Decoder<'a> {
                     // and read a new byte
                     bits_pending_count = 8;
                     // We copy the value from memory array to bits_pending local variable.
-                    bits_pending = *self
+                    bits_pending = self
                         .memory
-                        .read(memory_access_internal)
+                        .load_byte(memory_access_internal)
                         .with_context(|| "error when trying to decode")?;
-                    memory_access_internal.instruction_pointer += 1;
+                    memory_access_internal.offset += 1;
                 }
 
                 // NOTE(casey): If this assert fires, it means we have an error in our table,
@@ -388,17 +388,17 @@ impl<'a> Decoder<'a> {
             // Memory mode, 16-bit displacement follows
             // Or mod == was 0b00 and rm == 0b110.
             let memory_access_0 = *memory_access;
-            let disp_0 = *self
+            let disp_0 = self
                 .memory
-                .read(memory_access_0)
+                .load_byte(memory_access_0)
                 .with_context(|| "failed reading first byte for displacement value")?
                 as i16;
 
             let mut memory_access_1 = *memory_access;
-            memory_access_1.instruction_pointer += 1;
-            let disp_1 = *self
+            memory_access_1.offset += 1;
+            let disp_1 = self
                 .memory
-                .read(memory_access_1)
+                .load_byte(memory_access_1)
                 .with_context(|| "failed reading second byte for displacement value")?
                 as i16;
 
@@ -406,18 +406,18 @@ impl<'a> Decoder<'a> {
             // Then cast to int so go compiler performs a sign extension.
             displacement = ((disp_1 << 8) | disp_0) as i32;
             // Updated memory access passed as mutable reference.
-            memory_access.instruction_pointer += 2
+            memory_access.offset += 2
         } else if mod_field == 0b01 {
             // Memory mode, 8-bit displacement follows
             // Perform cast to sign 8 so we get symbol correctly.
             // Then cast to int so go compiler performs a sign extension.
-            displacement = *self
+            displacement = self
                 .memory
-                .read(*memory_access)
+                .load_byte(*memory_access)
                 .with_context(|| "failed reading displacement value")?
                 as i8 as i32; // TODO: Do we need both casts? Maybe yes to ensure correct sign, then signn extension.
             // Updated memory access passed as mutable reference.
-            memory_access.instruction_pointer += 1
+            memory_access.offset += 1
         }
 
         return Ok(displacement);
@@ -439,33 +439,33 @@ impl<'a> Decoder<'a> {
 
         if data_is_w {
             let memory_access_0 = *memory_access;
-            let data_0 = *self
+            let data_0 = self
                 .memory
-                .read(memory_access_0)
+                .load_byte(memory_access_0)
                 .with_context(|| "failed reading first byte for displacement value")?
                 as i16;
 
             let mut memory_access_1 = *memory_access;
-            memory_access_1.instruction_pointer += 1;
-            let data_1 = *self
+            memory_access_1.offset += 1;
+            let data_1 = self
                 .memory
-                .read(memory_access_1)
+                .load_byte(memory_access_1)
                 .with_context(|| "failed reading second byte for displacement value")?
                 as i16;
 
             // Perform cast to sign 16 so we get symbol correctly.
             // Then cast to int so go compiler performs a sign extension.
             data = ((data_1 << 8) | data_0) as i32;
-            memory_access.instruction_pointer += 2
+            memory_access.offset += 2
         } else {
             // Perform cast to sign 8 so we get symbol correctly.
             // Then cast to int so go compiler performs a sign extension.
-            data = *self
+            data = self
                 .memory
-                .read(*memory_access)
+                .load_byte(*memory_access)
                 .with_context(|| "failed reading displacement value")? as i8
                 as i32;
-            memory_access.instruction_pointer += 1;
+            memory_access.offset += 1;
         }
 
         Ok(data)

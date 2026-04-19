@@ -2,15 +2,15 @@ use anyhow::{Result, anyhow};
 use std::fs;
 
 pub struct MemoryAccess {
-    pub instruction_pointer: usize,
-    pub code_segment: usize,
+    pub offset: usize,
+    pub segment: usize,
 }
 
 impl Clone for MemoryAccess {
     fn clone(&self) -> Self {
         return Self {
-            instruction_pointer: self.instruction_pointer,
-            code_segment: self.code_segment,
+            offset: self.offset,
+            segment: self.segment,
         };
     }
 }
@@ -20,13 +20,13 @@ impl Copy for MemoryAccess {}
 impl MemoryAccess {
     pub fn new() -> MemoryAccess {
         MemoryAccess {
-            instruction_pointer: 0,
-            code_segment: 0,
+            offset: 0,
+            segment: 0,
         }
     }
 
     pub fn absolute_address(&self) -> usize {
-        self.instruction_pointer
+        self.offset
     }
 }
 
@@ -44,10 +44,10 @@ impl Memory {
         let mut memory_vec = vec![0; MAX_MEMORY];
 
         // Uncomment to debug binary of loaded program.
-        // for n in &readed_binary {
-        //     print!("{:08b} ", n);
-        // }
-        // println!();
+        for n in &readed_binary {
+            print!("{:08b} ", n);
+        }
+        println!();
 
         if readed_binary.len() >= MAX_MEMORY {
             return Err(anyhow!(
@@ -69,7 +69,7 @@ impl Memory {
         return self.program_size;
     }
 
-    pub fn read(&self, memory_access: MemoryAccess) -> Result<&u8> {
+    pub fn load_byte(&self, memory_access: MemoryAccess) -> Result<u8> {
         // TODO: Calculate effective address using instruction pointer and code segment.
         //
         // The absolute address position at wich CPU is reading instructions from.
@@ -77,14 +77,65 @@ impl Memory {
         // With 16 bits we only are able to address 2^16 = 65536 different address locations.
         // So we they solved the problem combining code segment and IP registers. Convention is (CS:IP)
         // To produce a 20 bits numbers. Formula is the following:
-        // AbsolutePosition = (cs << 4) | ip.
-        let res = self.data.get(memory_access.instruction_pointer);
-        // TODO: How should we simulate out of range access, maybe wrap?
-        match res {
-            Some(val) => return Ok(val),
-            None => return Err(anyhow!("accessing invalid memory")),
-        }
+        // AbsolutePosition = (cs << 4) + ip.
+        let absolute_position = (memory_access.segment << 4).wrapping_add(memory_access.offset);
+        let res = *self
+            .data
+            .get(absolute_position)
+            .ok_or_else(|| anyhow!("accessing invalid memory"))?;
+
+        Ok(res)
     }
 
-    pub fn write(&mut self) {}
+    pub fn store_byte(&mut self, memory_access: MemoryAccess, value: u8) -> Result<()> {
+        let absolute_position = (memory_access.segment << 4).wrapping_add(memory_access.offset);
+
+        let mem_address = self
+            .data
+            .get_mut(absolute_position)
+            .ok_or_else(|| anyhow!("accessing invalid memory"))?;
+        *mem_address = value;
+
+        Ok(())
+    }
+
+    pub fn load_word(&self, memory_access: MemoryAccess) -> Result<u16> {
+        let absolute_position = (memory_access.segment << 4).wrapping_add(memory_access.offset);
+        // vec.get() returns a refrence (borrow) to the read item, we copy it
+        // as a store may write the same location, and we dont want api users to fight the borrow
+        // system there as everything is possible with the simulated memory.
+        let low_byte = *self
+            .data
+            .get(absolute_position)
+            .ok_or_else(|| anyhow!("accessing invalid memory"))? as u16;
+        let high_byte = *self
+            .data
+            .get(absolute_position + 1)
+            .ok_or_else(|| anyhow!("accessing invalid memory"))? as u16;
+
+        let result = high_byte << 8 | low_byte;
+        return Ok(result);
+    }
+
+    pub fn store_word(&mut self, memory_access: MemoryAccess, value: u16) -> Result<()> {
+        let absolute_position = (memory_access.segment << 4).wrapping_add(memory_access.offset);
+
+        // Intel 8086 is little endiang, meaning the lowest significative bytes are stored in lower memory addresses.
+        let high_byte = (value >> 8) as u8;
+        let low_byte = value as u8;
+
+        let low_mem_address = self
+            .data
+            .get_mut(absolute_position)
+            .ok_or_else(|| anyhow!("accessing invalid memory in low memory address of word"))?;
+        *low_mem_address = low_byte;
+
+        let high_mem_address = self
+            .data
+            .get_mut(absolute_position + 1)
+            .ok_or_else(|| anyhow!("accessing invalid memory in high memory address of word"))?;
+        *high_mem_address = high_byte;
+
+        Ok(())
+    }
 }
