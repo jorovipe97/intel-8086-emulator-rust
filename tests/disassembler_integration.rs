@@ -238,7 +238,7 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
 // Cpu flags, testing add, sub, cmp
 #[test]
 fn cpu_testing_add_sub_cmp() -> Result<()> {
-    let memory = Memory::load_program_binary("listings_asm/listing_0046_add_sub_cmp")?;
+    let mut memory = Memory::load_program_binary("listings_asm/listing_0046_add_sub_cmp")?;
     let mut memory_access = MemoryAccess::new();
     let mut cpu = Cpu::new();
 
@@ -250,7 +250,7 @@ fn cpu_testing_add_sub_cmp() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -276,7 +276,7 @@ fn cpu_testing_add_sub_cmp() -> Result<()> {
 // Cpu testing flags, challenge
 #[test]
 fn cpu_testing_challenge_flags() -> Result<()> {
-    let memory = Memory::load_program_binary("listings_asm/listing_0047_challenge_flags")?;
+    let mut memory = Memory::load_program_binary("listings_asm/listing_0047_challenge_flags")?;
     let mut memory_access = MemoryAccess::new();
     let mut cpu = Cpu::new();
 
@@ -288,7 +288,7 @@ fn cpu_testing_challenge_flags() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -314,7 +314,7 @@ fn cpu_testing_challenge_flags() -> Result<()> {
 // Cpu testing instruction pointer
 #[test]
 fn cpu_testing_instruction_pointer() -> Result<()> {
-    let memory = Memory::load_program_binary("listings_asm/listing_0048_ip_register")?;
+    let mut memory = Memory::load_program_binary("listings_asm/listing_0048_ip_register")?;
     let mut memory_access = MemoryAccess::new();
     let mut cpu = Cpu::new();
 
@@ -326,7 +326,7 @@ fn cpu_testing_instruction_pointer() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -354,7 +354,7 @@ fn cpu_testing_instruction_pointer() -> Result<()> {
 // Cpu testing instruction pointer
 #[test]
 fn cpu_testing_jumps() -> Result<()> {
-    let memory = Memory::load_program_binary("listings_asm/listing_0050_challenge_jumps")?;
+    let mut memory = Memory::load_program_binary("listings_asm/listing_0050_challenge_jumps")?;
     let mut memory_access = MemoryAccess::new();
     let mut cpu = Cpu::new();
 
@@ -366,7 +366,7 @@ fn cpu_testing_jumps() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, new_memory_access)?;
+        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
