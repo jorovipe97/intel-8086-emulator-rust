@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use std::fs;
 
 pub struct MemoryAccess {
@@ -135,6 +135,13 @@ impl Memory {
             .get_mut(absolute_position + 1)
             .ok_or_else(|| anyhow!("accessing invalid memory in high memory address of word"))?;
         *high_mem_address = high_byte;
+
+        Ok(())
+    }
+
+    // Saves entire memory into a file.
+    pub fn save_to_file(&self, path: &str) -> Result<()> {
+        fs::write(path, &self.data).with_context(|| "failed to save memory content into a file")?;
 
         Ok(())
     }

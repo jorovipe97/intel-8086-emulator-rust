@@ -30,17 +30,16 @@ fn main() -> Result<()> {
         .get(1)
         .ok_or_else(|| anyhow!("program binary file is required"))?;
 
-    let simulate_flag = args.get(2);
-    let should_simulate = match simulate_flag {
-        Some(sim_flag_value) => {
-            if sim_flag_value == "--simulate" {
-                true
-            } else {
-                false
-            }
+    // Iterates flags and extract them.
+    let mut should_simulate = false;
+    let mut should_dump_memory = false;
+    for flag in args.iter().map(|f| f.as_str()) {
+        match flag {
+            "--simulate" => should_simulate = true,
+            "--dump-memory" => should_dump_memory = true,
+            _ => (),
         }
-        None => false,
-    };
+    }
 
     let mut memory = Memory::load_program_binary(path)?;
     let mut ip_memory_access = MemoryAccess::new(); // The memory access to get the instructions.
@@ -97,6 +96,10 @@ fn main() -> Result<()> {
     }
 
     println!("{}", cpu.to_string());
+
+    if should_dump_memory {
+        memory.save_to_file("./result.data")?;
+    }
 
     Ok(())
 }

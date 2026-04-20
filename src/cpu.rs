@@ -60,7 +60,26 @@ impl Cpu {
             OperationType::In => todo!(),            // TOOD: Implement IO device transfers
             OperationType::Out => todo!(),           // TOOD: Implement IO device transfers
             OperationType::Xlat => todo!(),          // TOOD: Implement IO device transfers
-            OperationType::Lea => todo!(),           // TOOD: Implement IO device transfers
+            OperationType::Lea => match instruction.operands.source {
+                Operand::Memory(address) => {
+                    // Validates destination is an 16 bit register
+                    if let Operand::Register(reg) = instruction.operands.destination {
+                        if reg.count == 1 {
+                            return Err(anyhow!("LEA destination must be a 16-bit register"));
+                        }
+                    } else {
+                        return Err(anyhow!("LEA destination must be a register"));
+                    }
+
+                    let effective_address = self.calculate_memory_effective_address(address)?;
+                    effective_address.offset as u16
+                }
+                _ => {
+                    return Err(anyhow!(
+                        "source operand should be an address for LEA instruction."
+                    ));
+                }
+            }, // TOOD: Implement IO device transfers
             OperationType::Lds => todo!(),           // TOOD: Implement IO device transfers
             OperationType::Les => todo!(),           // TOOD: Implement IO device transfers
             OperationType::Lahf => todo!(),          // TOOD: Implement IO device transfers

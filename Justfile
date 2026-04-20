@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0053_add_loop_challenge"
+file := "listings_asm/listing_0055_challenge_rectangle"
 
 run:
     @echo "Assembling original file..."
@@ -6,7 +6,7 @@ run:
     @echo "Assembling succesfull!"
 
     @echo "Running 8086 disassembler..."
-    cargo run -- {{file}} --simulate
+    cargo run -- {{file}} --simulate --dump-memory
     @echo "Program finished correctly!"
 
     @echo "Assembling disassembled file..."
