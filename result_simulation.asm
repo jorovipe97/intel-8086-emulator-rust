@@ -1,0 +1,1 @@
+mov bx, 1000mov bp, 2000mov si, 3000mov di, 4000mov cx, bxmov dx, 12mov dx, [+1000]mov cx, [bx]mov cx, [bp]mov [si], cxmov [di], cxmov cx, [bx+1000]mov cx, [bp+1000]mov [si+1000], cxmov [di+1000], cxadd cx, dxadd [di+1000], cxadd dx, 50

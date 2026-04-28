@@ -21,6 +21,12 @@ pub struct Cpu {
     pub flags: u16,
 }
 
+#[derive(Clone, Copy)]
+pub struct ExecutionResult {
+    pub new_ip_memory_access: MemoryAccess,
+    pub flags: u16,
+}
+
 // TODO: To make CPU flow look realistic, maybe create a memory access method that returns the initial
 // memory access that starts at instruction pointer 0, etc
 impl Cpu {
@@ -38,7 +44,7 @@ impl Cpu {
         instruction: DecodedInstruction,
         memory: &mut Memory,
         ip_memory_access: MemoryAccess,
-    ) -> Result<MemoryAccess> {
+    ) -> Result<ExecutionResult> {
         // Update internal instruction pointer to the value where decoded left it after
         // decoding the instruction.
         self.instruction_pointer = ip_memory_access.offset;
@@ -52,7 +58,10 @@ impl Cpu {
         let final_value: u16 = match instruction.operation {
             OperationType::None => 0,
             OperationType::Mov => source_value,
-            OperationType::Add => destination_value.wrapping_add(source_value), // Rust overflows panics in debug mode.
+            OperationType::Add => {
+                // Rust overflows panics in debug mode.
+                destination_value.wrapping_add(source_value)
+            }
             OperationType::Cmp | OperationType::Sub => destination_value.wrapping_sub(source_value),
             OperationType::Push => source_value,
             OperationType::Pop => destination_value, // TODO: This needs to change, right now this is the value of the destination, however what we actually need is the value at the top of the stack.
@@ -186,10 +195,16 @@ impl Cpu {
         // operand, just affects flags, this instruction is usually used to control the program
         // execution flow.
         if let OperationType::Cmp = instruction.operation {
-            return Ok(ip_memory_access);
+            return Ok(ExecutionResult {
+                new_ip_memory_access: ip_memory_access,
+                flags: self.flags,
+            });
         }
         if let OperationType::Test = instruction.operation {
-            return Ok(ip_memory_access);
+            return Ok(ExecutionResult {
+                new_ip_memory_access: ip_memory_access,
+                flags: self.flags,
+            });
         }
 
         // Updates simulated memory. Destination can be a register or memory.
@@ -249,9 +264,12 @@ impl Cpu {
             Operand::InstructionPointerIntersegment(_) => todo!(),
         }
 
-        Ok(MemoryAccess {
-            offset: self.instruction_pointer,
-            segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
+        Ok(ExecutionResult {
+            new_ip_memory_access: MemoryAccess {
+                offset: self.instruction_pointer,
+                segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
+            },
+            flags: self.flags,
         })
     }
 

@@ -1,0 +1,19 @@
+bits 16
+mov bx, 1000 ; Clocks: 4 = (4)
+mov bp, 2000 ; Clocks: 8 = (4)
+mov si, 3000 ; Clocks: 12 = (4)
+mov di, 4000 ; Clocks: 16 = (4)
+mov cx, bx ; Clocks: 18 = (2)
+mov dx, 12 ; Clocks: 22 = (4)
+mov dx, [+1000] ; Clocks: 36 = (8+6ea)
+mov cx, [bx] ; Clocks: 49 = (8+5ea)
+mov cx, [bp] ; Clocks: 62 = (8+5ea)
+mov [si], cx ; Clocks: 76 = (9+5ea)
+mov [di], cx ; Clocks: 90 = (9+5ea)
+mov cx, [bx+1000] ; Clocks: 107 = (8+9ea)
+mov cx, [bp+1000] ; Clocks: 124 = (8+9ea)
+mov [si+1000], cx ; Clocks: 142 = (9+9ea)
+mov [di+1000], cx ; Clocks: 160 = (9+9ea)
+add cx, dx ; Clocks: 163 = (3) | Flags:  -> ZPO
+add [di+1000], cx ; Clocks: 188 = (16+9ea) | Flags: ZPO -> ZPO
+add dx, 50 ; Clocks: 192 = (4) | Flags: ZPO -> 

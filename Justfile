@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0055_challenge_rectangle"
+file := "listings_asm/listing_0056_estimating_cycles"
 
 run:
     @echo "Assembling original file..."

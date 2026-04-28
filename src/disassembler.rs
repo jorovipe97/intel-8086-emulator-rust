@@ -116,6 +116,18 @@ impl Disassembler {
         }
 
         self.print_operand(&instruction.operands.source, instruction.size);
+    }
+
+    pub fn begin_comment_after_instruction(&mut self) {
+        self.string_builder.push_str(" ;");
+    }
+
+    pub fn add_comment_after_instruction(&mut self, comment: &str) {
+        self.string_builder.push(' ');
+        self.string_builder.push_str(comment);
+    }
+
+    pub fn add_new_line(&mut self) {
         self.string_builder.push('\n');
     }
 

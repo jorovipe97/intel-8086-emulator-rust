@@ -22,6 +22,7 @@ fn disassemble_register_to_register() -> Result<()> {
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
+        disassembler.add_new_line();
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;
@@ -70,6 +71,7 @@ fn disassemble_mov_modes() -> Result<()> {
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
+        disassembler.add_new_line();
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;
@@ -118,6 +120,7 @@ fn disassemble_add_sub_cmp_jumps() -> Result<()> {
             .with_context(|| "failed decoding current instruction")?;
 
         disassembler.add_instruction(&instruction);
+        disassembler.add_new_line();
 
         // Update memory_access, so on next loop we get next instruction.
         memory_access = new_memory_access;

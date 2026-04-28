@@ -1,12 +1,15 @@
 use anyhow::{Context, Result, anyhow};
-use sim8086::cpu::Cpu;
+use sim8086::cpu::{Cpu, ExecutionResult};
 use sim8086::decoder::Decoder;
 use sim8086::disassembler::Disassembler;
 use sim8086::memory::{Memory, MemoryAccess};
+use sim8086::reporter::{CpuVersion, Reporter};
+
 use std::env;
 
 // 8086 user's manual table of content:
 // - Memory segmentation is described in page 31
+// - Instructions clocks in page 71
 // - Instructions encoding table is around page 256
 // 8086 nice tutorial: https://yassinebridi.github.io/asm-docs/
 // 8086 cool simulator: https://yjdoc2.github.io/8086-emulator-web/compile
@@ -33,12 +36,18 @@ fn main() -> Result<()> {
     // Iterates flags and extract them.
     let mut should_simulate = false;
     let mut should_dump_memory = false;
+    let mut should_count_clocks = false;
     for flag in args.iter().map(|f| f.as_str()) {
         match flag {
             "--simulate" => should_simulate = true,
             "--dump-memory" => should_dump_memory = true,
+            "--count-clocks" => should_count_clocks = true,
             _ => (),
         }
+    }
+
+    if should_count_clocks && !should_simulate {
+        return Err(anyhow!("to count clocks you must pass --simulate flag"));
     }
 
     let mut memory = Memory::load_program_binary(path)?;
@@ -55,8 +64,8 @@ fn main() -> Result<()> {
                 .decode_machine_code(ip_memory_access)
                 .with_context(|| "failed decoding current instruction")?
         };
-        println!("{instruction:?}");
         disassembler.add_instruction(&instruction);
+        disassembler.add_new_line();
 
         ip_memory_access = new_ip_memory_access;
 
@@ -73,7 +82,12 @@ fn main() -> Result<()> {
     }
 
     let mut cpu = Cpu::new();
-    ip_memory_access = MemoryAccess::new(); // Start from the beggining.
+    let mut reporter = Reporter::new(CpuVersion::Intel8086);
+    let mut ip_memory_access = MemoryAccess::new(); // Start from the beggining.
+    let mut prev_execution_result = ExecutionResult {
+        new_ip_memory_access: ip_memory_access,
+        flags: cpu.flags,
+    };
     loop {
         let (instruction, new_ip_memory_access) = {
             // We borrow Memory instance to the Decoder instance...
@@ -86,8 +100,19 @@ fn main() -> Result<()> {
 
         // We pass a mutable borrow of the memory to the cpu.execute_instruction
         // to support load and store operations.
-        ip_memory_access =
+        let new_execution_result =
             cpu.execute_instruction(instruction, &mut memory, new_ip_memory_access)?;
+
+        // This may change because of jump instructions.
+        ip_memory_access = new_execution_result.new_ip_memory_access;
+
+        // Report instruction execution
+        reporter.analyze_instruction_execution(
+            instruction,
+            prev_execution_result,
+            new_execution_result,
+        );
+        prev_execution_result = new_execution_result;
 
         // If we reached the end of the program, exit.
         if ip_memory_access.absolute_address() + 1 > memory.program_size() {
@@ -96,6 +121,7 @@ fn main() -> Result<()> {
     }
 
     println!("{}", cpu.to_string());
+    reporter.save_to_file("./result_simulation.txt")?;
 
     if should_dump_memory {
         memory.save_to_file("./result.data")?;
