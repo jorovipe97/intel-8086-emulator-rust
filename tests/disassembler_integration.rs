@@ -253,7 +253,8 @@ fn cpu_testing_add_sub_cmp() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        let result = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        memory_access = result.new_ip_memory_access;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -291,7 +292,8 @@ fn cpu_testing_challenge_flags() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        let result = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        memory_access = result.new_ip_memory_access;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -329,7 +331,8 @@ fn cpu_testing_instruction_pointer() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        let result = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        memory_access = result.new_ip_memory_access;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
@@ -369,7 +372,8 @@ fn cpu_testing_jumps() -> Result<()> {
         };
 
         // Update memory_access, so on next loop we get next instruction.
-        memory_access = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        let result = cpu.execute_instruction(instruction, &mut memory, new_memory_access)?;
+        memory_access = result.new_ip_memory_access;
 
         // If we reached the end of the program, exit.
         if memory_access.absolute_address() + 1 > memory.program_size() {
