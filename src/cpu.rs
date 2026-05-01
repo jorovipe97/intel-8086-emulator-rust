@@ -25,6 +25,7 @@ pub struct Cpu {
 pub struct ExecutionResult {
     pub new_ip_memory_access: MemoryAccess,
     pub flags: u16,
+    pub condition_branch_taken: bool,
 }
 
 // TODO: To make CPU flow look realistic, maybe create a memory access method that returns the initial
@@ -114,7 +115,7 @@ impl Cpu {
             OperationType::Cwd => todo!(),
             OperationType::Not => !destination_value,
             OperationType::Shl => todo!(), // TODO: OF=0 if first operand keeps original sign.
-            OperationType::Shr => todo!(), // TODO: OF=0 if first operand keeps original sign.
+            OperationType::Shr => destination_value.unbounded_shr(source_value as u32), // TODO: OF=0 if first operand keeps original sign.
             OperationType::Sar => todo!(), // TODO: OF=0 if first operand keeps original sign.
             OperationType::Rol => todo!(), // TODO: OF=0 if first operand keeps original sign.
             OperationType::Ror => todo!(), // TODO: OF=0 if first operand keeps original sign.
@@ -198,12 +199,14 @@ impl Cpu {
             return Ok(ExecutionResult {
                 new_ip_memory_access: ip_memory_access,
                 flags: self.flags,
+                condition_branch_taken: false,
             });
         }
         if let OperationType::Test = instruction.operation {
             return Ok(ExecutionResult {
                 new_ip_memory_access: ip_memory_access,
                 flags: self.flags,
+                condition_branch_taken: false,
             });
         }
 
@@ -259,7 +262,17 @@ impl Cpu {
                 self.segment_registers[segment_register.to_index()] = final_value;
             }
             Operand::InstructionPointerIncrement(increment) => {
-                self.compute_instruction_pointer(&instruction, increment);
+                let condition_branch_taken =
+                    self.compute_instruction_pointer(&instruction, increment);
+
+                return Ok(ExecutionResult {
+                    new_ip_memory_access: MemoryAccess {
+                        offset: self.instruction_pointer,
+                        segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
+                    },
+                    flags: self.flags,
+                    condition_branch_taken,
+                });
             }
             Operand::InstructionPointerIntersegment(_) => todo!(),
         }
@@ -270,6 +283,7 @@ impl Cpu {
                 segment: self.segment_registers[SegmentRegisterName::CS as usize] as usize,
             },
             flags: self.flags,
+            condition_branch_taken: false,
         })
     }
 
@@ -353,8 +367,12 @@ impl Cpu {
         }
     }
 
-    fn compute_instruction_pointer(&mut self, instruction: &DecodedInstruction, increment: i32) {
-        let should_jump: bool = match instruction.operation {
+    fn compute_instruction_pointer(
+        &mut self,
+        instruction: &DecodedInstruction,
+        increment: i32,
+    ) -> bool {
+        let condition_branch_taken: bool = match instruction.operation {
             OperationType::Jnz => {
                 if !self.is_flag_set(CpuFlags::ZF) {
                     true
@@ -541,11 +559,13 @@ impl Cpu {
             // | OperationType::Aaa => false,
         };
 
-        if should_jump {
+        if condition_branch_taken {
             self.instruction_pointer = self
                 .instruction_pointer
                 .wrapping_add_signed(increment as isize);
         }
+
+        return condition_branch_taken;
     }
 
     fn compute_zf(&mut self, instruction: &DecodedInstruction, final_value: u16) {

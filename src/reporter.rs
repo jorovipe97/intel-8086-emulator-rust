@@ -2,7 +2,7 @@ use crate::{
     cpu::ExecutionResult,
     disassembler::Disassembler,
     instructions::{
-        decoded_instruction::DecodedInstruction,
+        decoded_instruction::{DecodedInstruction, DecodedInstructionExtraAttributes},
         encodings::{CpuFlags, OperationType, RegisterName},
         operands::{MemoryDisplacementInfo, Operand},
     },
@@ -45,18 +45,56 @@ impl Reporter {
     ) {
         self.disassembler.add_instruction(&instruction);
         self.disassembler.begin_comment_after_instruction();
-        self.report_clocks(&instruction);
+        self.report_clocks(&instruction, &new_execution_result);
         self.report_flags_values(prev_execution_result.flags, new_execution_result.flags);
         self.disassembler.add_new_line();
     }
 
-    fn report_clocks(&mut self, instruction: &DecodedInstruction) {
+    fn report_clocks(
+        &mut self,
+        instruction: &DecodedInstruction,
+        execution_result: &ExecutionResult,
+    ) {
         let clocks_option = match instruction.operation {
             OperationType::Mov => self.calculate_clocks_mov(
                 instruction.operands.destination,
                 instruction.operands.source,
+                instruction
+                    .extra_attributes
+                    .contains(DecodedInstructionExtraAttributes::IS_WIDE),
             ),
-            OperationType::Add => self.calculate_clocks_add(
+            OperationType::Add | OperationType::Xor | OperationType::Cmp => self
+                .calculate_clocks_add(
+                    instruction.operands.destination,
+                    instruction.operands.source,
+                ),
+            OperationType::Inc | OperationType::Dec => self.calculate_clocks_inc(
+                instruction.operands.destination,
+                instruction
+                    .extra_attributes
+                    .contains(DecodedInstructionExtraAttributes::IS_WIDE),
+            ),
+            OperationType::Test => self.calculate_clocks_test(
+                instruction.operands.destination,
+                instruction.operands.source,
+                instruction
+                    .extra_attributes
+                    .contains(DecodedInstructionExtraAttributes::IS_WIDE),
+            ),
+            OperationType::Je | OperationType::Jnz | OperationType::Jne | OperationType::Jb => {
+                let base = if execution_result.condition_branch_taken {
+                    16
+                } else {
+                    4
+                };
+
+                Some(InstructionClocks {
+                    base,
+                    transfers: 0,
+                    ea: 0,
+                })
+            }
+            OperationType::Shr => self.calculate_clocks_shr(
                 instruction.operands.destination,
                 instruction.operands.source,
             ),
@@ -86,10 +124,73 @@ impl Reporter {
         }
     }
 
+    fn calculate_clocks_shr(
+        &self,
+        destination: Operand,
+        source: Operand,
+    ) -> Option<InstructionClocks> {
+        let mut clocks = InstructionClocks {
+            base: 0,
+            ea: 0,
+            transfers: 0,
+        };
+
+        if let Operand::Register(_) = destination
+            && let Operand::Immediate(_) = source
+        {
+            clocks.base = 2;
+        } else {
+            todo!("other combinations not implemented");
+        }
+
+        return Some(clocks);
+    }
+
+    fn calculate_clocks_inc(
+        &self,
+        destination: Operand,
+        is_wide: bool,
+    ) -> Option<InstructionClocks> {
+        let mut clocks = InstructionClocks {
+            base: 0,
+            ea: 0,
+            transfers: 0,
+        };
+
+        match destination {
+            Operand::Register(reg_info) => {
+                if reg_info.count == 1 {
+                    // If register is 8 bits
+                    clocks.base = 3;
+                } else {
+                    // If register is 16 bits
+                    clocks.base = 2;
+                }
+            }
+            Operand::Memory(mem_info) => {
+                clocks.base = 15;
+                clocks.ea = self.calculate_clocks_effective_address(mem_info);
+                if is_wide {
+                    match self.cpu_version {
+                        CpuVersion::Intel8086 => (),
+                        CpuVersion::Intel8088 => {
+                            // Two transfers, we must add 4 clocks per transfer.
+                            clocks.transfers = 2 * 4;
+                        }
+                    }
+                }
+            }
+            _ => return None,
+        }
+
+        return Some(clocks);
+    }
+
     fn calculate_clocks_mov(
         &self,
         destination: Operand,
         source: Operand,
+        is_wide: bool,
     ) -> Option<InstructionClocks> {
         let mut clocks = InstructionClocks {
             base: 0,
@@ -178,6 +279,20 @@ impl Reporter {
             && let Operand::Register(_) = source
         {
             clocks.base = 2;
+        } else if let Operand::Memory(mem_dst_info) = destination
+            && let Operand::Immediate(_) = source
+        {
+            clocks.base = 10;
+            clocks.ea = self.calculate_clocks_effective_address(mem_dst_info);
+            match self.cpu_version {
+                CpuVersion::Intel8086 => (),
+                CpuVersion::Intel8088 => {
+                    // Add 16 bits for each word transfer as the 8088 buss is 8 bits
+                    if is_wide {
+                        clocks.transfers = 4;
+                    }
+                }
+            }
         }
 
         Some(clocks)
@@ -256,6 +371,78 @@ impl Reporter {
             && let Operand::Register(_) = source
         {
             clocks.base = 3;
+        }
+
+        Some(clocks)
+    }
+
+    fn calculate_clocks_test(
+        &self,
+        destination: Operand,
+        source: Operand,
+        is_wide: bool,
+    ) -> Option<InstructionClocks> {
+        let mut clocks = InstructionClocks {
+            base: 0,
+            ea: 0,
+            transfers: 0,
+        };
+
+        // TODO: Refactor this, as this pattern wont scale well, if we wanted to report
+        // clocks for all instrucitons.
+        if let Operand::Register(_) = destination
+            && let Operand::Register(_) = source
+        {
+            clocks.base = 3;
+        } else if let Operand::Register(dst_reg_info) = destination
+            && let Operand::Memory(src_mem_info) = source
+        {
+            // TODO: Get this directly from decoded instruction, here we just need to check if instruction is doing EA calculations and transfers penalties.
+            clocks.base = 9;
+
+            // TODO: This code is absolute trash, refactor ASAP.
+            clocks.ea = self.calculate_clocks_effective_address(src_mem_info);
+
+            let is_16_bits = dst_reg_info.count == 2;
+            // let ea_address = self.calculate_memory_effective_address(src_mem_info)?;
+
+            match self.cpu_version {
+                CpuVersion::Intel8086 => {
+                    // If effective address is odd, add 4 extra clocks for each transfer
+                    // if is_16_bits && (ea_address.offset & 0b1) == 0b1 {
+                    //     transfers_clocks = 4;
+                    // }
+                }
+                CpuVersion::Intel8088 => {
+                    // Add 16 bits for each word transfer as the 8088 buss is 8 bits
+                    if is_16_bits {
+                        clocks.transfers = 4;
+                    }
+                }
+            }
+        } else if let Operand::Register(dst_reg_info) = destination
+            && let Operand::Immediate(_) = source
+        {
+            // Accumulator (AX or AL) AH is not accumulator, immediate
+            if dst_reg_info.register_name == RegisterName::A && dst_reg_info.offset != 1 {
+                clocks.base = 4;
+            } else {
+                clocks.base = 5;
+            }
+        } else if let Operand::Memory(dst_mem_info) = destination
+            && let Operand::Immediate(_) = source
+        {
+            clocks.base = 11;
+            clocks.ea = self.calculate_clocks_effective_address(dst_mem_info);
+
+            match self.cpu_version {
+                CpuVersion::Intel8086 => (),
+                CpuVersion::Intel8088 => {
+                    if is_wide {
+                        clocks.transfers = 4;
+                    }
+                }
+            }
         }
 
         Some(clocks)

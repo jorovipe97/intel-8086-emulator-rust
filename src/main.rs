@@ -2,6 +2,7 @@ use anyhow::{Context, Result, anyhow};
 use sim8086::cpu::{Cpu, ExecutionResult};
 use sim8086::decoder::Decoder;
 use sim8086::disassembler::Disassembler;
+use sim8086::instructions::encodings::OperationType;
 use sim8086::memory::{Memory, MemoryAccess};
 use sim8086::reporter::{CpuVersion, Reporter};
 
@@ -87,6 +88,7 @@ fn main() -> Result<()> {
     let mut prev_execution_result = ExecutionResult {
         new_ip_memory_access: ip_memory_access,
         flags: cpu.flags,
+        condition_branch_taken: false,
     };
     loop {
         let (instruction, new_ip_memory_access) = {
@@ -97,6 +99,12 @@ fn main() -> Result<()> {
                 .decode_machine_code(ip_memory_access)
                 .with_context(|| "failed decoding current instruction")?
         };
+
+        // If detected a ret instruction, just stop, we do not implement
+        // ret, and call instructions.
+        if instruction.operation == OperationType::Ret {
+            break;
+        }
 
         // We pass a mutable borrow of the memory to the cpu.execute_instruction
         // to support load and store operations.

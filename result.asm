@@ -1,19 +1,25 @@
 bits 16
-mov bx, 1000
-mov bp, 2000
-mov si, 3000
-mov di, 4000
-mov cx, bx
-mov dx, 12
-mov dx, [+1000]
-mov cx, [bx]
-mov cx, [bp]
-mov [si], cx
-mov [di], cx
-mov cx, [bx+1000]
-mov cx, [bp+1000]
-mov [si+1000], cx
-mov [di+1000], cx
-add cx, dx
-add [di+1000], cx
-add dx, 50
+mov di, 8
+mov bp, 1000
+mov byte [bp], 9
+mov byte [bp+1], 17
+mov byte [bp+2], 23
+mov byte [bp+3], 4
+mov byte [bp+4], 27
+mov byte [bp+5], 41
+mov byte [bp+6], 39
+mov byte [bp+7], 31
+xor ax, ax
+cmp di, 4
+jb $+2+24
+shr di, 1
+shr di, 1
+xor ax, ax
+add al, [bp]
+add al, [bp+1]
+add al, [bp+2]
+add al, [bp+3]
+add bp, 4
+dec di
+jnz $+2+-18
+ret 

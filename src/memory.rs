@@ -110,7 +110,7 @@ impl Memory {
             .ok_or_else(|| anyhow!("accessing invalid memory"))? as u16;
         let high_byte = *self
             .data
-            .get(absolute_position + 1)
+            .get(absolute_position.wrapping_add(1))
             .ok_or_else(|| anyhow!("accessing invalid memory"))? as u16;
 
         let result = high_byte << 8 | low_byte;
@@ -132,7 +132,7 @@ impl Memory {
 
         let high_mem_address = self
             .data
-            .get_mut(absolute_position + 1)
+            .get_mut(absolute_position.wrapping_add(1))
             .ok_or_else(|| anyhow!("accessing invalid memory in high memory address of word"))?;
         *high_mem_address = high_byte;
 
