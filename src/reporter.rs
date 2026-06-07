@@ -81,6 +81,14 @@ impl Reporter {
                     .extra_attributes
                     .contains(DecodedInstructionExtraAttributes::IS_WIDE),
             ),
+            OperationType::Jmp => {
+                // TODO: This is the clocks for short, near and far jumps, if operand is memptr16, regptr16 and memptr32 is not supported in the report.
+                Some(InstructionClocks {
+                    base: 15,
+                    transfers: 0,
+                    ea: 0,
+                })
+            }
             OperationType::Je | OperationType::Jnz | OperationType::Jne | OperationType::Jb => {
                 let base = if execution_result.condition_branch_taken {
                     16
