@@ -139,7 +139,7 @@ impl Cpu {
             OperationType::Scasb => todo!(),
             OperationType::Scasw => todo!(),
             OperationType::Call => todo!(),
-            OperationType::Jmp => todo!(),
+            OperationType::Jmp => destination_value,
             OperationType::Ret => todo!(),
             OperationType::Retf => todo!(),
             // All jump operations operate on the destination value.
@@ -373,6 +373,9 @@ impl Cpu {
         increment: i32,
     ) -> bool {
         let condition_branch_taken: bool = match instruction.operation {
+            OperationType::Jmp => {
+                true // Unconditional jump
+            }
             OperationType::Jnz => {
                 if !self.is_flag_set(CpuFlags::ZF) {
                     true
