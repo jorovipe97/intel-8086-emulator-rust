@@ -1,4 +1,4 @@
-file := "listings_asm/listing_0064_TreeScalarPtr"
+file := "listings_asm/listing_0047_challenge_flags"
 
 run:
     @echo "Assembling original file..."

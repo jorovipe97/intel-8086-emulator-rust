@@ -1,31 +1,15 @@
 bits 16
-mov di, 8 ; Clocks: 4 = (4)
-mov bp, 1000 ; Clocks: 8 = (4)
-mov byte [bp], 9 ; Clocks: 23 = (10+5ea)
-mov byte [bp+1], 17 ; Clocks: 42 = (10+9ea)
-mov byte [bp+2], 23 ; Clocks: 61 = (10+9ea)
-mov byte [bp+3], 4 ; Clocks: 80 = (10+9ea)
-mov byte [bp+4], 27 ; Clocks: 99 = (10+9ea)
-mov byte [bp+5], 41 ; Clocks: 118 = (10+9ea)
-mov byte [bp+6], 39 ; Clocks: 137 = (10+9ea)
-mov byte [bp+7], 31 ; Clocks: 156 = (10+9ea)
-xor ax, ax ; Clocks: 159 = (3) | Flags:  -> ZP
-cmp di, 4 ; Clocks: 163 = (4) | Flags: ZP -> 
-jb $+2+24 ; Clocks: 167 = (4)
-shr di, 1 ; Clocks: 169 = (2)
-shr di, 1 ; Clocks: 171 = (2)
-xor ax, ax ; Clocks: 174 = (3) | Flags:  -> ZP
-add al, [bp] ; Clocks: 188 = (9+5ea) | Flags: ZP -> P
-add al, [bp+1] ; Clocks: 206 = (9+9ea) | Flags: P -> 
-add al, [bp+2] ; Clocks: 224 = (9+9ea) | Flags:  -> A
-add al, [bp+3] ; Clocks: 242 = (9+9ea) | Flags: A -> P
-add bp, 4 ; Clocks: 246 = (4) | Flags: P -> 
-dec di ; Clocks: 248 = (2)
-jnz $+2+-18 ; Clocks: 264 = (16)
-add al, [bp] ; Clocks: 278 = (9+5ea) | Flags:  -> PA
-add al, [bp+1] ; Clocks: 296 = (9+9ea) | Flags: PA -> 
-add al, [bp+2] ; Clocks: 314 = (9+9ea) | Flags:  -> SPAO
-add al, [bp+3] ; Clocks: 332 = (9+9ea) | Flags: SPAO -> S
-add bp, 4 ; Clocks: 336 = (4) | Flags: S -> PA
-dec di ; Clocks: 338 = (2) | Flags: PA -> ZPA
-jnz $+2+-18 ; Clocks: 342 = (4) | Flags: ZPA -> ZPA
+add bx, 30000 ; Clocks: 4 = (4) | Flags:  -> P
+add bx, 10000 ; Clocks: 8 = (4) | Flags: P -> SO
+sub bx, 5000 ; | Flags: SO -> SPA
+sub bx, 5000 ; | Flags: SPA -> PO
+mov bx, 1 ; Clocks: 12 = (4) | Flags: PO -> PO
+mov cx, 100 ; Clocks: 16 = (4) | Flags: PO -> PO
+add bx, cx ; Clocks: 19 = (3) | Flags: PO -> P
+mov dx, 10 ; Clocks: 23 = (4) | Flags: P -> P
+sub cx, dx ; | Flags: P -> PA
+add bx, -25536 ; Clocks: 27 = (4) | Flags: PA -> SP
+add cx, -90 ; Clocks: 31 = (4) | Flags: SP -> ZPCA
+mov sp, 99 ; Clocks: 35 = (4) | Flags: ZPCA -> ZPCA
+mov bp, 98 ; Clocks: 39 = (4) | Flags: ZPCA -> ZPCA
+cmp bp, sp ; Clocks: 42 = (3) | Flags: ZPCA -> SPCA

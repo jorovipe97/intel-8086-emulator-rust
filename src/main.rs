@@ -15,7 +15,7 @@ use std::env;
 // 8086 nice tutorial: https://yassinebridi.github.io/asm-docs/
 // 8086 cool simulator: https://yjdoc2.github.io/8086-emulator-web/compile
 //
-// An Engineer did reverse enginerring of the 8086
+// An Engineer did reverse engineering of the 8086
 // https://www.righto.com/2023/05/8086-processor-group-decode-rom.html
 // https://news.ycombinator.com/item?id=35939168
 //
@@ -84,7 +84,7 @@ fn main() -> Result<()> {
 
     let mut cpu = Cpu::new();
     let mut reporter = Reporter::new(CpuVersion::Intel8086);
-    let mut ip_memory_access = MemoryAccess::new(); // Start from the beggining.
+    let mut ip_memory_access = MemoryAccess::new(); // Start from the beginning.
     let mut prev_execution_result = ExecutionResult {
         new_ip_memory_access: ip_memory_access,
         flags: cpu.flags,
@@ -94,7 +94,7 @@ fn main() -> Result<()> {
         let (instruction, new_ip_memory_access) = {
             // We borrow Memory instance to the Decoder instance...
             // The decoder instance just lives during this scope, and then
-            // is droped, releasing the borrowed memory so it can be mutable borrowed after.
+            // is dropped, releasing the borrowed memory so it can be mutable borrowed after.
             Decoder::new(&memory)
                 .decode_machine_code(ip_memory_access)
                 .with_context(|| "failed decoding current instruction")?
